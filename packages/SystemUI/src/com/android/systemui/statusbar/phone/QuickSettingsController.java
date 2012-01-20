@@ -18,7 +18,6 @@ package com.android.systemui.statusbar.phone;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
@@ -64,6 +63,7 @@ import com.android.systemui.quicksettings.WiFiDisplayTile;
 import com.android.systemui.quicksettings.WiFiTile;
 import com.android.systemui.quicksettings.WifiAPTile;
 import com.android.systemui.quicksettings.VolumeTile;
+import com.android.systemui.quicksettings.FChargeTile;
 
 public class QuickSettingsController {
     private static String TAG = "QuickSettingsController";
@@ -107,6 +107,7 @@ public class QuickSettingsController {
     public static final String TILE_USBTETHER = "toggleUsbTether";
     public static final String TILE_VOLUME = "toggleVolume";
     public static final String TILE_DAYDREAM = "toggleDaydream";
+    public static final String TILE_FCHARGE = "toggleFCharge";
 
     private static final String TILE_DELIMITER = "|";
     private static ArrayList<String> TILES_DEFAULT = new ArrayList<String>();
@@ -162,7 +163,9 @@ public class QuickSettingsController {
     public static final int USBTETHER_TILE = 23;
     public static final int VOLUME_TILE = 24;
     public static final int DAYDREAM_TILE = 25;
+    public static final int FCHARGE_TILE = 26;
     public static final int USER_TILE = 99;
+
     private InputMethodTile IMETile;
 
     public QuickSettingsController(Context context, QuickSettingsContainerView container, PhoneStatusBar statusBarService) {
@@ -263,7 +266,9 @@ public class QuickSettingsController {
                 mQuickSettings.add(VOLUME_TILE);
             } else if (tile.equals(TILE_DAYDREAM)) {
                 mQuickSettings.add(DAYDREAM_TILE);
-            }
+            } else if (tile.equals(TILE_FCHARGE)) {
+                mQuickSettings.add(FCHARGE_TILE);
+	    }
         }
 
         // Load the dynamic tiles
@@ -392,7 +397,6 @@ public class QuickSettingsController {
     void addQuickSettings(LayoutInflater inflater){
         // Load the user configured tiles
         loadTiles();
-
         // Now add the actual tiles from the loaded list
         for (Integer entry: mQuickSettings) {
             QuickSettingsTile qs = null;
@@ -478,6 +482,8 @@ public class QuickSettingsController {
                 break;
             case DAYDREAM_TILE:
                 qs = new DaydreamTile(mContext, inflater, mContainerView, this);
+            case FCHARGE_TILE:
+                qs = new FChargeTile(mContext, inflater, mContainerView, this, mHandler);
                 break;
             }
             if (qs != null) {

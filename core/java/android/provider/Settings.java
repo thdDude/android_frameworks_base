@@ -2973,6 +2973,12 @@ public final class Settings {
          */
         public static final String STATUSBAR_NOTIF_COUNT = "status_bar_notif_count";
 
+	/**
+         * Whether to display high end graphics effects disabled on older devices
+         * @hide
+         */
+        public static final String HIGH_END_GFX_ENABLED = "high_end_gfx_enabled";
+
         /**
          * use Alt Activity Resolver Grid (GB style)
          * boolean

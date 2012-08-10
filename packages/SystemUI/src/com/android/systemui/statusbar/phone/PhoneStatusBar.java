@@ -137,6 +137,7 @@ public class PhoneStatusBar extends BaseStatusBar {
 
     private static final boolean CLOSE_PANEL_WHEN_EMPTIED = true;
 
+    private boolean mHighEndGfx;
     private static final int NOTIFICATION_PRIORITY_MULTIPLIER = 10; // see NotificationManagerService
     private static final int HIDE_ICONS_BELOW_SCORE = Notification.PRIORITY_LOW * NOTIFICATION_PRIORITY_MULTIPLIER;
 
@@ -152,7 +153,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     private float mExpandAccelPx; // classic value: 2000px/s/s
     private float mCollapseAccelPx; // classic value: 2000px/s/s (will be negated to collapse "up")
 
-    private float mFlingGestureMaxOutputVelocityPx; // how fast can it really go? (should be a little 
+    private float mFlingGestureMaxOutputVelocityPx; // how fast can it really go? (should be a little
                                                     // faster than mSelfCollapseVelocityPx)
 
     PhoneStatusBarPolicy mIconPolicy;
@@ -310,6 +311,10 @@ public class PhoneStatusBar extends BaseStatusBar {
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.PHONE_STATUS_BAR_VOLUME), false, this,
                     UserHandle.USER_ALL);
+
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HIGH_END_GFX_ENABLED), false, this,
+                    UserHandle.USER_ALL);
             update();
         }
 
@@ -320,6 +325,8 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         public void update() {
             ContentResolver resolver = mContext.getContentResolver();
+            mHighEndGfx = Settings.System.getInt(resolver,
+                    Settings.System.HIGH_END_GFX_ENABLED, 0) != 0;
             refreshStatusBarVolume();
         }
     }
@@ -427,7 +434,6 @@ public class PhoneStatusBar extends BaseStatusBar {
         mNotificationPanel.setStatusBar(this);
         mNotificationPanelIsFullScreenWidth =
             (mNotificationPanel.getLayoutParams().width == ViewGroup.LayoutParams.MATCH_PARENT);
-
         // make the header non-responsive to clicks
         mNotificationPanel.findViewById(R.id.header).setOnTouchListener(
                 new View.OnTouchListener() {
@@ -437,7 +443,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                     }
                 });
 
-        if (!ActivityManager.isHighEndGfx()) {
+        if (!ActivityManager.isHighEndGfx() && !mHighEndGfx) {
             mStatusBarWindow.setBackground(null);
             mNotificationPanel.setBackground(new FastColorDrawable(context.getResources().getColor(
                     R.color.notification_panel_solid_background)));
@@ -643,7 +649,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                 }
 
                 if (mSettingsPanel != null) {
-                    if (!ActivityManager.isHighEndGfx()) {
+                    if (!ActivityManager.isHighEndGfx() && !mHighEndGfx) {
                         mSettingsPanel.setBackground(new FastColorDrawable(context.getResources().getColor(
                                 R.color.notification_panel_solid_background)));
                     }
@@ -730,7 +736,8 @@ public class PhoneStatusBar extends BaseStatusBar {
                 | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM
                 | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
                 (opaque ? PixelFormat.OPAQUE : PixelFormat.TRANSLUCENT));
-        if (ActivityManager.isHighEndGfx()) {
+
+        if (ActivityManager.isHighEndGfx() || mHighEndGfx) {
             lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
         } else {
             lp.flags |= WindowManager.LayoutParams.FLAG_DIM_BEHIND;
@@ -755,7 +762,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                 | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM
                 | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
                 (opaque ? PixelFormat.OPAQUE : PixelFormat.TRANSLUCENT));
-        if (ActivityManager.isHighEndGfx()) {
+        if (ActivityManager.isHighEndGfx() || mHighEndGfx) {
             lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
         }
         lp.gravity = Gravity.BOTTOM | Gravity.LEFT;
@@ -909,7 +916,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                     | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
                 PixelFormat.OPAQUE);
         // this will allow the navbar to run in an overlay on devices that support this
-        if (ActivityManager.isHighEndGfx()) {
+        if (ActivityManager.isHighEndGfx() || mHighEndGfx) {
             lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
         }
 
@@ -1165,7 +1172,7 @@ public class PhoneStatusBar extends BaseStatusBar {
             !(emergencyCallsShownElsewhere && mNetworkController.isEmergencyOnly())
             && mPile.getHeight() < (mNotificationPanel.getHeight() - mCarrierLabelHeight - mNotificationHeaderHeight)
             && mScrollView.getVisibility() == View.VISIBLE;
-        
+
         if (force || mCarrierLabelVisible != makeVisible) {
             mCarrierLabelVisible = makeVisible;
             if (DEBUG) {
@@ -1752,13 +1759,13 @@ public class PhoneStatusBar extends BaseStatusBar {
 
     /**
      * Enables or disables layers on the children of the notifications pile.
-     * 
+     *
      * When layers are enabled, this method attempts to enable layers for the minimal
      * number of children. Only children visible when the notification area is fully
      * expanded will receive a layer. The technique used in this method might cause
      * more children than necessary to get a layer (at most one extra child with the
      * current UI.)
-     * 
+     *
      * @param layerType {@link View#LAYER_TYPE_NONE} or {@link View#LAYER_TYPE_HARDWARE}
      */
     private void setPileLayers(int layerType) {
@@ -1771,7 +1778,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                 }
                 break;
             case View.LAYER_TYPE_HARDWARE:
-                final int[] location = new int[2]; 
+                final int[] location = new int[2];
                 mNotificationPanel.getLocationInWindow(location);
 
                 final int left = location[0];
@@ -2110,9 +2117,9 @@ public class PhoneStatusBar extends BaseStatusBar {
                     + ", mTrackingPosition=" + mTrackingPosition);
             pw.println("  mTicking=" + mTicking);
             pw.println("  mTracking=" + mTracking);
-            pw.println("  mNotificationPanel=" + 
-                    ((mNotificationPanel == null) 
-                            ? "null" 
+            pw.println("  mNotificationPanel=" +
+                    ((mNotificationPanel == null)
+                            ? "null"
                             : (mNotificationPanel + " params=" + mNotificationPanel.getLayoutParams().debug(""))));
             pw.println("  mAnimating=" + mAnimating
                     + ", mAnimY=" + mAnimY + ", mAnimVel=" + mAnimVel
@@ -2243,7 +2250,6 @@ public class PhoneStatusBar extends BaseStatusBar {
         lp.gravity = mNotificationPanelGravity;
         lp.leftMargin = mNotificationPanelMarginPx;
         mNotificationPanel.setLayoutParams(lp);
-
         if (mSettingsPanel != null) {
             lp = (FrameLayout.LayoutParams) mSettingsPanel.getLayoutParams();
             lp.gravity = mSettingsPanelGravity;

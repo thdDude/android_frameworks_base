@@ -332,6 +332,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     int mCurrentAppOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
     boolean mHasSoftInput = false;
     int mBackKillTimeout;
+    boolean showNavBar;
+    boolean mShowNavBar;
+    int mNavButtonsHeight;
     int mPointerLocationMode = 0; // guarded by mLock
 
     // The last window we were told about in focusChanged.
@@ -581,6 +584,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.KILL_APP_LONGPRESS_TIMEOUT), false, this,
                     UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAV_BUTTONS_HEIGHT), false, this,
+                    UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+		    Settings.System.NAVIGATION_CONTROLS), false, this,
+                    UserHandle.USER_ALL);
+
             updateSettings();
         }
 
@@ -1188,15 +1198,36 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
 
         if (!mHasSystemNavBar) {
-            mHasNavigationBar = mContext.getResources().getBoolean(
-                    com.android.internal.R.bool.config_showNavigationBar);
-            // Allow a system property to override this. Used by the emulator.
-            // See also hasNavigationBar().
-            String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
-            if (! "".equals(navBarOverride)) {
-                if      (navBarOverride.equals("1")) mHasNavigationBar = false;
-                else if (navBarOverride.equals("0")) mHasNavigationBar = true;
+            mHasNavigationBar = true;
+	    showNavBar = hasNavigationBar();
+	    mShowNavBar = Settings.System.getInt(mContext.getContentResolver(),
+		    Settings.System.NAVIGATION_CONTROLS, showNavBar ? 1 : 0) == 1;
+            mNavButtonsHeight = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.NAV_BUTTONS_HEIGHT, 48);
+            if (mShowNavBar) {
+            mNavigationBarHeightForRotation[mPortraitRotation]
+ 			= mNavigationBarHeightForRotation[mUpsideDownRotation]
+			= mNavButtonsHeight * DisplayMetrics.DENSITY_DEVICE/DisplayMetrics.DENSITY_DEFAULT;
+            mNavigationBarHeightForRotation[mLandscapeRotation]
+			= mNavigationBarHeightForRotation[mSeascapeRotation]
+			= mNavButtonsHeight * DisplayMetrics.DENSITY_DEVICE/DisplayMetrics.DENSITY_DEFAULT;
+            mNavigationBarWidthForRotation[mPortraitRotation]
+			= mNavigationBarWidthForRotation[mUpsideDownRotation]
+			= mNavigationBarWidthForRotation[mLandscapeRotation]
+			= mNavigationBarWidthForRotation[mSeascapeRotation]
+			= (mNavButtonsHeight - 6) * DisplayMetrics.DENSITY_DEVICE /
+				DisplayMetrics.DENSITY_DEFAULT;
             }
+            else {
+                mNavigationBarWidthForRotation[mPortraitRotation]
+                        = mNavigationBarWidthForRotation[mUpsideDownRotation]
+                        = mNavigationBarWidthForRotation[mLandscapeRotation]
+                        = mNavigationBarWidthForRotation[mSeascapeRotation]
+                        = mNavigationBarHeightForRotation[mPortraitRotation]
+                        = mNavigationBarHeightForRotation[mUpsideDownRotation]
+                        = mNavigationBarHeightForRotation[mLandscapeRotation]
+                        = mNavigationBarHeightForRotation[mSeascapeRotation] = 0;
+	  }
         } else {
             mHasNavigationBar = false;
         }
@@ -1236,6 +1267,19 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         ContentResolver resolver = mContext.getContentResolver();
         boolean updateRotation = false;
         synchronized (mLock) {
+/*
+	    boolean showNavBar;
+            showNavBar = mContext.getResources().getBoolean(
+                    com.android.internal.R.bool.config_showNavigationBar);
+            // Allow a system property to override this. Used by the emulator.
+            // See also hasNavigationBar().
+            String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
+            if (! "".equals(navBarOverride)) {
+                if      (navBarOverride.equals("1")) showNavBar = false;
+                else if (navBarOverride.equals("0")) showNavBar = true;
+            }*/
+	    showNavBar = hasNavigationBar();
+
             mEndcallBehavior = Settings.System.getIntForUser(resolver,
                     Settings.System.END_BUTTON_BEHAVIOR,
                     Settings.System.END_BUTTON_BEHAVIOR_DEFAULT,
@@ -1250,6 +1294,33 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.VOLBTN_MUSIC_CONTROLS, 1, UserHandle.USER_CURRENT) == 1);
     	    mBackKillTimeout = Settings.System.getInt(resolver,
                     Settings.System.KILL_APP_LONGPRESS_TIMEOUT, 1500);
+	    mShowNavBar = Settings.System.getInt(resolver,
+		    Settings.System.NAVIGATION_CONTROLS, showNavBar ? 1 : 0) == 1;
+            mNavButtonsHeight = Settings.System.getInt(resolver,
+                    Settings.System.NAV_BUTTONS_HEIGHT, 48);
+	    if (mShowNavBar) {
+            mNavigationBarHeightForRotation[mPortraitRotation]
+ 			= mNavigationBarHeightForRotation[mUpsideDownRotation]
+			= mNavButtonsHeight * DisplayMetrics.DENSITY_DEVICE/DisplayMetrics.DENSITY_DEFAULT;
+            mNavigationBarHeightForRotation[mLandscapeRotation]
+			= mNavigationBarHeightForRotation[mSeascapeRotation]
+			= mNavButtonsHeight * DisplayMetrics.DENSITY_DEVICE/DisplayMetrics.DENSITY_DEFAULT;
+            mNavigationBarWidthForRotation[mPortraitRotation]
+			= mNavigationBarWidthForRotation[mUpsideDownRotation]
+			= mNavigationBarWidthForRotation[mLandscapeRotation]
+			= mNavigationBarWidthForRotation[mSeascapeRotation]
+			= (mNavButtonsHeight - 6) * DisplayMetrics.DENSITY_DEVICE /
+				DisplayMetrics.DENSITY_DEFAULT;
+	   } else {
+                mNavigationBarWidthForRotation[mPortraitRotation]
+                        = mNavigationBarWidthForRotation[mUpsideDownRotation]
+                        = mNavigationBarWidthForRotation[mLandscapeRotation]
+                        = mNavigationBarWidthForRotation[mSeascapeRotation]
+                        = mNavigationBarHeightForRotation[mPortraitRotation]
+                        = mNavigationBarHeightForRotation[mUpsideDownRotation]
+                        = mNavigationBarHeightForRotation[mLandscapeRotation]
+                        = mNavigationBarHeightForRotation[mSeascapeRotation] = 0;
+	  }
 
             // Configure rotation lock.
             int userRotation = Settings.System.getIntForUser(resolver,
@@ -4769,7 +4840,19 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // Use this instead of checking config_showNavigationBar so that it can be consistently
     // overridden by qemu.hw.mainkeys in the emulator.
     public boolean hasNavigationBar() {
-        return mHasNavigationBar;
+       if (!mHasSystemNavBar) {
+       showNavBar = mContext.getResources().getBoolean(
+            com.android.internal.R.bool.config_showNavigationBar);
+            // Allow a system property to override this. Used by the emulator.
+            String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
+            if (! "".equals(navBarOverride)) {
+                if      (navBarOverride.equals("1")) showNavBar = false;
+                else if (navBarOverride.equals("0")) showNavBar = true;
+            }
+        } else {
+	showNavBar = false;
+	}
+        return showNavBar;
     }
 
     @Override

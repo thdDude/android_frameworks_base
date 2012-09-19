@@ -2703,6 +2703,22 @@ public final class Settings {
          */
         public static final String KILL_APP_LONGPRESS_TIMEOUT = "kill_app_longpress_timeout";
 
+      /**
+        * Navigation Bar show switch
+         *
+         * @hide
+         */
+        //public static final String NAVIGATION_BAR_SHOW = "navigation_bar_show";
+        public static final String NAVIGATION_CONTROLS = "navigation_controls";
+
+  
+      /**
+         * Height of navigation bar buttons
+         * @hide
+         */
+        public static final String NAV_BUTTONS_HEIGHT = "nav_buttons_height";
+
+
         /**
         * Notification Power Widget - Custom Brightness Mode
         * @hide

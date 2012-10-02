@@ -3767,6 +3767,14 @@ public final class Settings {
         @Deprecated
         public static final String WIFI_WATCHDOG_PING_TIMEOUT_MS =
             Secure.WIFI_WATCHDOG_PING_TIMEOUT_MS;
+
+        /**
+         * whether to hide the tasmanager-button on recent switcher
+         *
+         * @hide
+         */
+        public static final String RECENT_TASK_MANAGER_BUTTON = "recent_task_manager_button";
+
     }
 
     /**

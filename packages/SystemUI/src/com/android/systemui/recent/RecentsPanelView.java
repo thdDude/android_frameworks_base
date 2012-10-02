@@ -19,6 +19,7 @@ package com.android.systemui.recent;
 import android.animation.Animator;
 import android.animation.LayoutTransition;
 import android.animation.TimeInterpolator;
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManagerNative;
 import android.app.ActivityOptions;
@@ -51,11 +52,13 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.content.pm.PackageManager;
 
 import com.android.systemui.R;
 import com.android.systemui.statusbar.BaseStatusBar;
@@ -80,6 +83,8 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
     private int mNumItemsWaitingForThumbnailsAndIcons;
     private ViewHolder mItemToAnimateInWhenWindowAnimationIsFinished;
     private boolean mWaitingForWindowAnimation;
+
+    private Button mRecentsTaskManagerButton;
 
     private RecentTasksLoader mRecentTasksLoader;
     private ArrayList<TaskDescription> mRecentTaskDescriptions;
@@ -454,7 +459,24 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
                 ((BitmapDrawable) mRecentsScrim.getBackground()).setTileModeY(TileMode.REPEAT);
             }
         }
-    }
+
+        boolean recent_task_manager_button = true;
+
+        mRecentsTaskManagerButton = (Button) findViewById(R.id.recents_task_manager_button);
+        if (mRecentsTaskManagerButton != null){
+            if (recent_task_manager_button){ //set the listener
+                mRecentsTaskManagerButton.setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        opentaskmanager();
+                    }
+                });
+            } else { // hide the button completely (gone)
+                mRecentsTaskManagerButton.setVisibility(View.GONE);
+            }
+        }
+
+    } /////
 
     public void setMinSwipeAlpha(float minAlpha) {
         if (mRecentsContainer instanceof RecentsScrollView){
@@ -772,5 +794,13 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
             }
         });
         popup.show();
+    }
+
+    private void opentaskmanager() {
+        Intent manageApps = new Intent(Settings.ACTION_MANAGE_ALL_APPLICATIONS_SETTINGS);
+        manageApps.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+      setVisibility(INVISIBLE);
+          getContext().startActivity(manageApps);
     }
 }

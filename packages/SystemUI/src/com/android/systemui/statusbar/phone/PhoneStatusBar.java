@@ -344,6 +344,8 @@ public class PhoneStatusBar extends BaseStatusBar {
                     Settings.System.SCREEN_BRIGHTNESS_MODE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_TRANSPARENCY), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NOTIFICATION_PANEL_TRANSPARENCY), false, this);
             update();
         }
 
@@ -360,6 +362,8 @@ public class PhoneStatusBar extends BaseStatusBar {
             mBrightnessControl = !autoBrightness && Settings.System.getInt(
                     resolver, Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL, 0) == 1;
             setStatusBarParams(mStatusBarView);
+            setNotificationPanelParams(mNotificationPanel);
+//	    setNotificationPanelParams(mNavigationBarView);
         }
     }
 
@@ -472,6 +476,8 @@ public class PhoneStatusBar extends BaseStatusBar {
             mNotificationPanel.setBackground(new FastColorDrawable(context.getResources().getColor(
                     R.color.notification_panel_solid_background)));
         }
+	setNotificationPanelParams(mNotificationPanel);
+
         if (ENABLE_INTRUDERS) {
             mIntruderAlertView = (IntruderAlertView) View.inflate(context, R.layout.intruder_alert, null);
             mIntruderAlertView.setVisibility(View.GONE);
@@ -693,6 +699,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                         mSettingsPanel.setBackground(new FastColorDrawable(context.getResources().getColor(
                                 R.color.notification_panel_solid_background)));
                     }
+		    setNotificationPanelParams(mNotificationPanel);
                 }
             }
 
@@ -2700,6 +2707,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                 (mCurrentTheme == null || !mCurrentTheme.equals(newTheme))) {
             mCurrentTheme = (CustomTheme)newTheme.clone();
             recreateStatusBar();
+            setNotificationPanelParams(mNotificationPanel);
         } else {
 
             if (mClearButton instanceof TextView) {

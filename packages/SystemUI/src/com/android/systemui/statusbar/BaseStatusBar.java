@@ -467,6 +467,12 @@ public abstract class BaseStatusBar extends SystemUI implements
         statusbarView.setBackgroundColor((int) (((float) opacity) * 255) * 0x1000000);
     }
 
+    protected void setNotificationPanelParams(View notificationpanel){
+	float opacity = (1-(Settings.System.getFloat(mContext.getContentResolver(),
+                Settings.System.NOTIFICATION_PANEL_TRANSPARENCY, 0.0f)));
+        notificationpanel.setBackgroundColor((int) (((float) opacity) * 255) * 0x1000000);
+    }
+
     protected void updateSearchPanel() {
         // Search Panel
         boolean visible = false;

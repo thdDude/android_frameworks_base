@@ -2767,6 +2767,12 @@ public final class Settings {
          */
         public static final String EXPANDED_DESKTOP_STATE = "expanded_desktop_state";
 
+
+        /**
+         * @hide
+         */
+        public static final String PHONE_STATUS_BAR_VOLUME = "phone_status_bar_volume";
+
         /**
          * Whether to use a separate delay for "slide to unlock" and security
          * lock

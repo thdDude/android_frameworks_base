@@ -101,6 +101,9 @@ import com.android.systemui.statusbar.policy.NotificationRowLayout;
 import com.android.systemui.statusbar.policy.OnSizeChangedListener;
 import com.android.systemui.statusbar.policy.Prefs;
 
+import com.android.systemui.statusbar.policy.ToggleSlider;
+import com.android.systemui.statusbar.policy.VolumeController;
+
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -284,6 +287,8 @@ public class PhoneStatusBar extends BaseStatusBar {
     // for disabling the status bar
     int mDisabled = 0;
 
+    VolumeController mVolume;
+
     // tracking calls to View.setSystemUiVisibility()
     int mSystemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE;
 
@@ -293,6 +298,31 @@ public class PhoneStatusBar extends BaseStatusBar {
     private final GestureRecorder mGestureRec = DEBUG_GESTURES
         ? new GestureRecorder("/sdcard/statusbar_gestures.dat") 
         : null;
+
+
+    class SettingsObserver extends ContentObserver {
+        SettingsObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            ContentResolver resolver = mContext.getContentResolver();
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PHONE_STATUS_BAR_VOLUME), false, this,
+                    UserHandle.USER_ALL);
+            update();
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            update();
+        }
+
+        public void update() {
+            ContentResolver resolver = mContext.getContentResolver();
+            refreshStatusBarVolume();
+        }
+    }
 
     private int mNavigationIconHints = 0;
     private final Animator.AnimatorListener mMakeIconsInvisible = new AnimatorListenerAdapter() {
@@ -351,6 +381,9 @@ public class PhoneStatusBar extends BaseStatusBar {
         addNavigationBar();
 
         if (ENABLE_INTRUDERS) addIntruderView();
+
+        SettingsObserver observer = new SettingsObserver(mHandler);
+        observer.observe();
 
         // Lastly, call to the icon policy to install/update all the icons.
         mIconPolicy = new PhoneStatusBarPolicy(mContext);
@@ -666,12 +699,24 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         mPowerWidget.setupWidget();
 
+        refreshStatusBarVolume();
+
         return mStatusBarView;
+
     }
 
     @Override
     protected View getStatusBarView() {
         return mStatusBarView;
+    }
+
+    private void refreshStatusBarVolume() {
+        boolean show = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.PHONE_STATUS_BAR_VOLUME, 0) == 1;
+        View volumeLayout = mStatusBarWindow.findViewById(R.id.volume_layout);
+        volumeLayout.setVisibility(show ? View.VISIBLE : View.GONE);
+        ToggleSlider volume = (ToggleSlider) mStatusBarWindow.findViewById(R.id.volume);
+        if (mVolume == null && show) mVolume = new VolumeController(mContext, volume);
     }
 
     @Override

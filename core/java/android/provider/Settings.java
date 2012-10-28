@@ -2620,6 +2620,20 @@ public final class Settings {
         public static final String KILL_APP_LONGPRESS_BACK = "kill_app_longpress_back";
 
         /**
+         * Notification Toggles Icon Color (On)
+         *
+         * @hide
+         */
+        public static final String TOGGLE_ICON_ON_COLOR = "toggle_icon_color_on";
+
+        /**
+         * Notification Toggles Icon Color (Off)
+         *
+         * @hide
+         */
+        public static final String TOGGLE_ICON_OFF_COLOR = "toggle_icon_color_off";
+
+        /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide

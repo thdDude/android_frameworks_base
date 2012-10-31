@@ -2620,6 +2620,20 @@ public final class Settings {
         public static final String KILL_APP_LONGPRESS_BACK = "kill_app_longpress_back";
 
         /**
+         * Enable Notification Toggles Icon Color
+         *
+         * @hide
+         */
+        public static final String ENABLE_TOGGLE_COLORS = "enable_toggle_colors";
+	
+         /**
+         * Enable Notification Toggles Bar
+         *
+         * @hide
+         */
+        public static final String ENABLE_TOGGLE_BAR = "enable_toggle_bar";
+
+        /**
          * Notification Toggles Icon Color (On)
          *
          * @hide
@@ -2688,7 +2702,6 @@ public final class Settings {
          * @hide
          */
         public static final String KILL_APP_LONGPRESS_TIMEOUT = "kill_app_longpress_timeout";
-
 
         /**
         * Notification Power Widget - Custom Brightness Mode
@@ -2793,7 +2806,6 @@ public final class Settings {
          * @hide
          */
         public static final String EXPANDED_DESKTOP_STATE = "expanded_desktop_state";
-
 
         /**
          * @hide

@@ -49,6 +49,7 @@ import com.android.internal.util.cm.LockscreenTargetUtils;
 import com.android.internal.widget.LockPatternUtils;
 import com.android.internal.widget.RotarySelector;
 import com.android.internal.widget.SlidingTab;
+import com.android.internal.widget.multiwaveview.CirclesView;
 import com.android.internal.widget.multiwaveview.GlowPadView;
 import com.android.internal.widget.multiwaveview.MultiWaveView;
 import com.android.internal.widget.multiwaveview.GlowPadView.OnTriggerListener;
@@ -65,6 +66,7 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
     private static final int LOCK_STYLE_ICS = 1;
     private static final int LOCK_STYLE_GB = 2;
     private static final int LOCK_STYLE_ECLAIR = 3;
+    private static final int LOCK_STYLE_OP4 = 4;
 
     private KeyguardSecurityCallback mCallback;
     private GlowPadView mGlowPadView;
@@ -88,6 +90,7 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
     private MultiWaveView mMultiWaveView;
     private SlidingTab mSlidingTabView;
     private RotarySelector mRotarySelectorView;
+    private CirclesView mCirclesView;
 
     // Get the style from settings
     private int mLockscreenStyle = Settings.System.getInt(mContext.getContentResolver(),
@@ -206,6 +209,47 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
         public void onGrabbedStateChange(View v, int grabbedState) { }
     };
 
+	CirclesView.OnTriggerListener mCirclesTriggerListener = new CirclesView.OnTriggerListener() {
+
+        @Override
+        public void onTrigger(View v, int whichHandle) {
+            if (whichHandle == CirclesView.OnTriggerListener.CENTER_HANDLE) {
+
+		// Delay hiding lock screen long enough for animation to finish
+            	postDelayed(new Runnable() {
+            	    public void run() {
+                    	mCallback.dismiss(false);
+            	    }
+            	}, 500);
+
+            }
+        }
+
+        @Override
+        public void onGrabbedStateChange(View v, int grabbedState) {
+            // Don't poke the wake lock when returning to a state where the handle is
+            // not grabbed since that can happen when the system (instead of the user)
+            // cancels the grab.
+            if (grabbedState == CirclesView.OnTriggerListener.CENTER_HANDLE) {
+                mCallback.userActivity(30000);
+            }
+        }
+
+      /*public void updateResources() {
+        }
+
+        public View getView() {
+            return mCirclesView;
+        }
+
+	public void setEnabled(int resourceId, boolean enabled) {
+            // Not used
+        }
+        public int getTargetPosition(int resourceId) {
+            return -1; // Not supported
+        }*/
+    };
+
     MultiWaveView.OnTriggerListener mWaveTriggerListener = new
             MultiWaveView.OnTriggerListener() {
 
@@ -308,6 +352,8 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
         mSlidingTabView.setOnTriggerListener(mTabTriggerListener);
         mRotarySelectorView = (RotarySelector) findViewById(R.id.rotary_selector_view);
         mRotarySelectorView.setOnDialTriggerListener(mDialTriggerListener);
+	mCirclesView = (CirclesView) findViewById(R.id.op4_view);
+        mCirclesView.setOnTriggerListener(mCirclesTriggerListener);
         updateTargets();
 
         switch (mLockscreenStyle) {
@@ -316,18 +362,21 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
                 mMultiWaveView.setVisibility(View.GONE);
                 mSlidingTabView.setVisibility(View.GONE);
                 mRotarySelectorView.setVisibility(View.GONE);
+		mCirclesView.setVisibility(View.GONE);
                 break;
             case LOCK_STYLE_ICS:
                 mGlowPadView.setVisibility(View.GONE);
                 mMultiWaveView.setVisibility(View.VISIBLE);
                 mSlidingTabView.setVisibility(View.GONE);
                 mRotarySelectorView.setVisibility(View.GONE);
+		mCirclesView.setVisibility(View.GONE);
                 break;
             case LOCK_STYLE_GB:
                 mGlowPadView.setVisibility(View.GONE);
                 mMultiWaveView.setVisibility(View.GONE);
                 mSlidingTabView.setVisibility(View.VISIBLE);
                 mRotarySelectorView.setVisibility(View.GONE);
+		mCirclesView.setVisibility(View.GONE);
 
                 mSlidingTabView.setHoldAfterTrigger(true, false);
                 mSlidingTabView.setLeftHintText(R.string.lockscreen_unlock_label);
@@ -342,8 +391,16 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
                 mMultiWaveView.setVisibility(View.GONE);
                 mSlidingTabView.setVisibility(View.GONE);
                 mRotarySelectorView.setVisibility(View.VISIBLE);
+		mCirclesView.setVisibility(View.GONE);
 
                 mRotarySelectorView.setLeftHandleResource(R.drawable.ic_jog_dial_unlock);
+                break;
+            case LOCK_STYLE_OP4:
+                mGlowPadView.setVisibility(View.GONE);
+                mMultiWaveView.setVisibility(View.GONE);
+                mSlidingTabView.setVisibility(View.GONE);
+                mRotarySelectorView.setVisibility(View.GONE);
+		mCirclesView.setVisibility(View.VISIBLE);
                 break;
             default:
                 Log.e(TAG, "Error: Unknown lockscreen style.");
@@ -615,6 +672,7 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
         mGlowPadView.reset(false);
         mMultiWaveView.reset(false);
         mSlidingTabView.reset(false);
+	mCirclesView.reset();
     }
 
     @Override

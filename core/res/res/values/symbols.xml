@@ -2045,4 +2045,10 @@
   <java-symbol type="drawable" name="ic_lockscreen_chevron_down" />
   <java-symbol type="drawable" name="ic_lockscreen_chevron_left" />
   <java-symbol type="drawable" name="ic_lockscreen_chevron_right" />
+
+  <!-- Optimus 4x lockscreen -->
+  <java-symbol type="id" name="op4_view" />
+  <java-symbol type="drawable" name="unlock_halo_op4" />
+  <java-symbol type="drawable" name="unlock_ring_op4" />
+  <java-symbol type="drawable" name="unlock_wave_op4" />
 </resources>

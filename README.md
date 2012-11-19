@@ -17,6 +17,7 @@ Optional Compomnent:
 - Prebuilt APK Can Be Downloaded Here: http://www.mediafire.com/?xqaaxl2x1qaltbm
 
 If you incorporate this Mod into your ROM, please link to my XDA thread at http://forum.xda-developers.com/showthread.php?t=1999125 in your ROM thread OP. 
+I will continue to make updates and improve this mod so please be sure to watch this repo. 
 
 Thanks &
 Enjoy!

@@ -70,7 +70,7 @@ public class StatusBarIconView extends AnimatedImageView {
         mNumberPain.setTextSize(scaledPx);
         mNotification = notification;
         mShowNotificationCount = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUSBAR_NOTIF_COUNT, 0) == 1;
+                Settings.System.STATUS_BAR_NOTIF_COUNT, 0) == 1;
         setContentDescription(notification);
 
         SettingsObserver observer = new SettingsObserver(new Handler());
@@ -300,27 +300,24 @@ public class StatusBarIconView extends AnimatedImageView {
             + " notification=" + mNotification + ")";
     }
 
-    class SettingsObserver extends ContentObserver {	
+    class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
-            super(handler);	
+            super(handler);
         }
-
-        void observe() {	
-            mContext.getContentResolver().registerContentObserver(	
-                    Settings.System.getUriFor(Settings.System.STATUSBAR_NOTIF_COUNT),	
+        void observe() {
+            mContext.getContentResolver().registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.STATUS_BAR_NOTIF_COUNT),
                     false, this);
         }
-
         void unobserve() {
             mContext.getContentResolver().unregisterContentObserver(this);
         }
-
         @Override
         public void onChange(boolean selfChange) {
-            mShowNotificationCount = Settings.System.getInt(	
+            mShowNotificationCount = Settings.System.getInt(
                     mContext.getContentResolver(),
-                    Settings.System.STATUSBAR_NOTIF_COUNT, 0) == 1;	
-            set(mIcon, true);	
+                    Settings.System.STATUS_BAR_NOTIF_COUNT, 0) == 1;
+            set(mIcon, true);
         }
     }
 }

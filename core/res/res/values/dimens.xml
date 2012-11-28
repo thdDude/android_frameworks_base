@@ -255,7 +255,7 @@
     <dimen name="kg_widget_view_height">0dp</dimen>
 
     <!-- Size of the clock font in keyguard's status view -->
-    <dimen name="kg_status_clock_font_size">75dp</dimen>
+    <dimen name="kg_status_clock_font_size">70dp</dimen>
 
     <!-- Size of the date font in keyguard's status view  -->
     <dimen name="kg_status_date_font_size">15dp</dimen>

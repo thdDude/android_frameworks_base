@@ -137,7 +137,6 @@ public class PhoneStatusBar extends BaseStatusBar {
 
     private static final boolean CLOSE_PANEL_WHEN_EMPTIED = true;
 
-    private boolean mHighEndGfx;
     private static final int NOTIFICATION_PRIORITY_MULTIPLIER = 10; // see NotificationManagerService
     private static final int HIDE_ICONS_BELOW_SCORE = Notification.PRIORITY_LOW * NOTIFICATION_PRIORITY_MULTIPLIER;
 
@@ -311,10 +310,6 @@ public class PhoneStatusBar extends BaseStatusBar {
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.PHONE_STATUS_BAR_VOLUME), false, this,
                     UserHandle.USER_ALL);
-
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.HIGH_END_GFX_ENABLED), false, this,
-                    UserHandle.USER_ALL);
             update();
         }
 
@@ -325,8 +320,7 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         public void update() {
             ContentResolver resolver = mContext.getContentResolver();
-            mHighEndGfx = Settings.System.getInt(resolver,
-                    Settings.System.HIGH_END_GFX_ENABLED, 0) != 0;
+
             refreshStatusBarVolume();
         }
     }
@@ -443,7 +437,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                     }
                 });
 
-        if (!ActivityManager.isHighEndGfx() && !mHighEndGfx) {
+        if (!ActivityManager.isHighEndGfx() && !ActivityManager.overwriteHighEndGfx()) {
             mStatusBarWindow.setBackground(null);
             mNotificationPanel.setBackground(new FastColorDrawable(context.getResources().getColor(
                     R.color.notification_panel_solid_background)));
@@ -649,7 +643,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                 }
 
                 if (mSettingsPanel != null) {
-                    if (!ActivityManager.isHighEndGfx() && !mHighEndGfx) {
+                    if (!ActivityManager.isHighEndGfx() && !ActivityManager.overwriteHighEndGfx()) {
                         mSettingsPanel.setBackground(new FastColorDrawable(context.getResources().getColor(
                                 R.color.notification_panel_solid_background)));
                     }
@@ -737,7 +731,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                 | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
                 (opaque ? PixelFormat.OPAQUE : PixelFormat.TRANSLUCENT));
 
-        if (ActivityManager.isHighEndGfx() || mHighEndGfx) {
+        if (ActivityManager.isHighEndGfx() || ActivityManager.overwriteHighEndGfx()) {
             lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
         } else {
             lp.flags |= WindowManager.LayoutParams.FLAG_DIM_BEHIND;
@@ -762,7 +756,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                 | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM
                 | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
                 (opaque ? PixelFormat.OPAQUE : PixelFormat.TRANSLUCENT));
-        if (ActivityManager.isHighEndGfx() || mHighEndGfx) {
+        if (ActivityManager.isHighEndGfx() || ActivityManager.overwriteHighEndGfx()) {
             lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
         }
         lp.gravity = Gravity.BOTTOM | Gravity.LEFT;
@@ -916,7 +910,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                     | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
                 PixelFormat.OPAQUE);
         // this will allow the navbar to run in an overlay on devices that support this
-        if (ActivityManager.isHighEndGfx() || mHighEndGfx) {
+        if (ActivityManager.isHighEndGfx() || ActivityManager.overwriteHighEndGfx()) {
             lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
         }
 

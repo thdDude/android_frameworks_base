@@ -3035,14 +3035,6 @@ public final class Settings {
         public static final String HIGH_END_GFX_ENABLED = "high_end_gfx_enabled";
 
         /**
-         * use Alt Activity Resolver Grid (GB style)
-         * boolean
-         *
-         * @hide
-         */
-        public static final String ACTIVITY_RESOLVER_USE_ALT = "activity_resolver_use_alt";
-
-        /**
          * Holds the text for the Carrier label. An empty string
          * will bring the default text back.
          * @hide

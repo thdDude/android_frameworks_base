@@ -16,10 +16,12 @@
 
 package com.android.systemui.statusbar.phone;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Slog;
 import android.view.MotionEvent;
@@ -93,11 +95,14 @@ public class NotificationPanelView extends PanelView {
     public boolean onTouchEvent(MotionEvent event) {
         if (PhoneStatusBar.SETTINGS_DRAG_SHORTCUT && mStatusBar.mHasFlipSettings) {
             boolean shouldFlip = false;
+            ContentResolver cr = mContext.getContentResolver();
 
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
                     mOkToFlip = getExpandedHeight() == 0;
-                    if(mStatusBar.skipToSettingsPanel()) {
+                    // If we have no notifications and the Power Widget is disabled, flip to the settings panel
+                    if(mStatusBar.skipToSettingsPanel()
+                            && Settings.System.getInt(cr, Settings.System.EXPANDED_VIEW_WIDGET, 0) == 0) {
                         shouldFlip = true;
                     }
                     break;

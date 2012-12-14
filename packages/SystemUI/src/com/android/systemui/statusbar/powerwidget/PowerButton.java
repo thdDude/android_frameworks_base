@@ -6,12 +6,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.graphics.PorterDuff.Mode;
+import android.database.ContentObserver;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
 import android.os.Vibrator;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageView;
@@ -53,7 +57,7 @@ public abstract class PowerButton {
     public static final String BUTTON_WIMAX = "toggleWimax";
     public static final String BUTTON_UNKNOWN = "unknown";
     private static final String SEPARATOR = "OV=I=XseparatorX=I=VO";
-    private static final Mode MASK_MODE = Mode.SCREEN;
+//    private static final Mode MASK_MODE = Mode.SCREEN;
 
     protected int mIcon;
     protected int mState;
@@ -85,6 +89,72 @@ public abstract class PowerButton {
     protected abstract boolean handleLongClick(Context context);
 
     protected void update(Context context) {
+
+	boolean mEnableToggleColors = Settings.System.getInt(context.getContentResolver(),
+                  Settings.System.ENABLE_TOGGLE_COLORS, 0) != 0;
+	boolean mEnableToggleBar = Settings.System.getInt(context.getContentResolver(),
+                  Settings.System.ENABLE_TOGGLE_BAR, 0) != 0;
+
+	if(mEnableToggleBar || mEnableToggleColors) {
+//    	int colorBackgroundOn = Color.TRANSPARENT;
+//    	int colorBackgroundOff = Color.TRANSPARENT;
+    	int colorIconOn;
+    	int colorIconOff;
+    	int defaultColor;
+    	int defaultOffColor;
+	int defaultIntermediatColor;
+	int colorIconIntermediate;
+
+        float[] hsv = new float[3];
+        defaultColor = context.getResources().getColor(
+                com.android.internal.R.color.holo_blue_light);
+        Color.colorToHSV(defaultColor, hsv);
+        hsv[2] *= 0.5f; // value component
+        defaultOffColor = Color.HSVToColor(hsv);
+
+	colorIconOn = Settings.System.getInt(context.getContentResolver(),
+                	Settings.System.TOGGLE_ICON_ON_COLOR, defaultColor);
+	colorIconOff = Settings.System.getInt(context.getContentResolver(),
+                	Settings.System.TOGGLE_ICON_OFF_COLOR, defaultOffColor);
+
+		if(mState == STATE_ENABLED) {
+		Drawable bg = context.getResources().getDrawable(R.drawable.btn_on);
+		   if(mEnableToggleBar) {
+            	   bg.setColorFilter(defaultColor, PorterDuff.Mode.SRC_ATOP);
+		   mIconView.setBackgroundDrawable(bg);
+		   }
+		   if(mEnableToggleColors) {
+		   mIconView.setColorFilter(colorIconOn, PorterDuff.Mode.SRC_ATOP);
+//		   mIconView.setBackgroundColor(colorBackgroundOn);
+		   }
+		} else if(mState == STATE_DISABLED || mState == STATE_UNKNOWN) {
+		Drawable bg = context.getResources().getDrawable(R.drawable.btn_off);
+		   if(mEnableToggleBar) {
+            	   bg.setColorFilter(defaultOffColor, PorterDuff.Mode.SRC_ATOP);
+		   mIconView.setBackgroundDrawable(bg);
+		   }
+		   if(mEnableToggleColors) {		   
+		   mIconView.setColorFilter(colorIconOff, PorterDuff.Mode.SRC_ATOP);
+//		   mIconView.setBackgroundColor(colorBackgroundOff);
+		   }
+		} else {
+		Drawable bg = context.getResources().getDrawable(R.drawable.btn_on);
+		   if(mEnableToggleBar) {
+       		   Color.colorToHSV(defaultColor, hsv);
+        	   hsv[2] *= 0.7f; // value component
+        	   defaultIntermediatColor = Color.HSVToColor(hsv);
+            	   bg.setColorFilter(defaultIntermediatColor, PorterDuff.Mode.SRC_ATOP);
+		   mIconView.setBackgroundDrawable(bg);
+		   }
+		   if(mEnableToggleColors) {
+       		   Color.colorToHSV(colorIconOn, hsv);
+        	   hsv[2] *= 0.7f; // value component
+        	   colorIconIntermediate = Color.HSVToColor(hsv);	   
+		   mIconView.setColorFilter(colorIconIntermediate, PorterDuff.Mode.SRC_ATOP);
+//		   mIconView.setBackgroundColor(colorBackgroundOff);
+		   }
+		}
+	}
         updateState(context);
         updateView();
     }
@@ -128,7 +198,6 @@ public abstract class PowerButton {
             mView.setTag(mType);
             mView.setOnClickListener(mClickListener);
             mView.setOnLongClickListener(mLongClickListener);
-
             mIconView = (ImageView) mView.findViewById(R.id.power_widget_button_image);
             mVibrator = (Vibrator) mView.getContext().getSystemService(Context.VIBRATOR_SERVICE);
         } else {

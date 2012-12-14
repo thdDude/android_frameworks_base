@@ -351,6 +351,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     int mCurrentAppOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
     boolean mHasSoftInput = false;
     int mBackKillTimeout;
+    boolean showNavBar;
+    boolean mShowNavBar;
+    int mNavButtonsHeight;
     int mPointerLocationMode = 0; // guarded by mLock
     int mDeviceHardwareKeys;
     boolean mHasHomeKey;
@@ -618,6 +621,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.ACCELEROMETER_ROTATION_ANGLES), false, this,
+                    UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.KILL_APP_LONGPRESS_TIMEOUT), false, this,
+                    UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAV_BUTTONS_HEIGHT), false, this,
+                    UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+		    Settings.System.NAVIGATION_CONTROLS), false, this,
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.KEY_HOME_LONG_PRESS_ACTION), false, this);
@@ -1172,8 +1184,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 com.android.internal.R.integer.config_lidNavigationAccessibility);
         mLidControlsSleep = mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_lidControlsSleep);
-        mBackKillTimeout = mContext.getResources().getInteger(
-                com.android.internal.R.integer.config_backKillTimeout);
         mDeviceHardwareKeys = mContext.getResources().getInteger(
                 com.android.internal.R.integer.config_deviceHardwareKeys);
         mHasHomeKey = ((mDeviceHardwareKeys & KEY_MASK_HOME) != 0);
@@ -1298,15 +1308,45 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
 
         if (!mHasSystemNavBar) {
-            mHasNavigationBar = mContext.getResources().getBoolean(
+            mHasNavigationBar = true;
+            showNavBar = mContext.getResources().getBoolean(
                     com.android.internal.R.bool.config_showNavigationBar);
             // Allow a system property to override this. Used by the emulator.
             // See also hasNavigationBar().
             String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
             if (! "".equals(navBarOverride)) {
-                if      (navBarOverride.equals("1")) mHasNavigationBar = false;
-                else if (navBarOverride.equals("0")) mHasNavigationBar = true;
+                if      (navBarOverride.equals("1")) showNavBar = false;
+                else if (navBarOverride.equals("0")) showNavBar = true;
             }
+
+	   mShowNavBar = Settings.System.getInt(mContext.getContentResolver(),
+		    Settings.System.NAVIGATION_CONTROLS, showNavBar ? 1 : 0) == 1;
+           mNavButtonsHeight = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.NAV_BUTTONS_HEIGHT, 48);
+            if (mShowNavBar) {
+            mNavigationBarHeightForRotation[mPortraitRotation]
+ 			= mNavigationBarHeightForRotation[mUpsideDownRotation]
+			= mNavButtonsHeight * DisplayMetrics.DENSITY_DEVICE/DisplayMetrics.DENSITY_DEFAULT;
+            mNavigationBarHeightForRotation[mLandscapeRotation]
+			= mNavigationBarHeightForRotation[mSeascapeRotation]
+			= mNavButtonsHeight * DisplayMetrics.DENSITY_DEVICE/DisplayMetrics.DENSITY_DEFAULT;
+            mNavigationBarWidthForRotation[mPortraitRotation]
+			= mNavigationBarWidthForRotation[mUpsideDownRotation]
+			= mNavigationBarWidthForRotation[mLandscapeRotation]
+			= mNavigationBarWidthForRotation[mSeascapeRotation]
+			= (mNavButtonsHeight - 6) * DisplayMetrics.DENSITY_DEVICE /
+				DisplayMetrics.DENSITY_DEFAULT;
+            }
+            else {
+                mNavigationBarWidthForRotation[mPortraitRotation]
+                        = mNavigationBarWidthForRotation[mUpsideDownRotation]
+                        = mNavigationBarWidthForRotation[mLandscapeRotation]
+                        = mNavigationBarWidthForRotation[mSeascapeRotation]
+                        = mNavigationBarHeightForRotation[mPortraitRotation]
+                        = mNavigationBarHeightForRotation[mUpsideDownRotation]
+                        = mNavigationBarHeightForRotation[mLandscapeRotation]
+                        = mNavigationBarHeightForRotation[mSeascapeRotation] = 0;
+	  }
         } else {
             mHasNavigationBar = false;
         }
@@ -1346,6 +1386,46 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         ContentResolver resolver = mContext.getContentResolver();
         boolean updateRotation = false;
         synchronized (mLock) {
+        if (!mHasSystemNavBar) {
+            mHasNavigationBar = true;
+            showNavBar = mContext.getResources().getBoolean(
+                    com.android.internal.R.bool.config_showNavigationBar);
+            // Allow a system property to override this. Used by the emulator.
+            // See also hasNavigationBar().
+            String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
+            if (! "".equals(navBarOverride)) {
+                if      (navBarOverride.equals("1")) showNavBar = false;
+                else if (navBarOverride.equals("0")) showNavBar = true;
+            }
+	    mShowNavBar = Settings.System.getInt(resolver,
+		    Settings.System.NAVIGATION_CONTROLS, showNavBar ? 1 : 0) == 1;
+            mNavButtonsHeight = Settings.System.getInt(resolver,
+                    Settings.System.NAV_BUTTONS_HEIGHT, 48);
+	    if (mShowNavBar) {
+            mNavigationBarHeightForRotation[mPortraitRotation]
+ 			= mNavigationBarHeightForRotation[mUpsideDownRotation]
+			= mNavButtonsHeight * DisplayMetrics.DENSITY_DEVICE/DisplayMetrics.DENSITY_DEFAULT;
+            mNavigationBarHeightForRotation[mLandscapeRotation]
+			= mNavigationBarHeightForRotation[mSeascapeRotation]
+			= mNavButtonsHeight * DisplayMetrics.DENSITY_DEVICE/DisplayMetrics.DENSITY_DEFAULT;
+            mNavigationBarWidthForRotation[mPortraitRotation]
+			= mNavigationBarWidthForRotation[mUpsideDownRotation]
+			= mNavigationBarWidthForRotation[mLandscapeRotation]
+			= mNavigationBarWidthForRotation[mSeascapeRotation]
+			= (mNavButtonsHeight - 6) * DisplayMetrics.DENSITY_DEVICE /
+				DisplayMetrics.DENSITY_DEFAULT;
+	   } else {
+                mNavigationBarWidthForRotation[mPortraitRotation]
+                        = mNavigationBarWidthForRotation[mUpsideDownRotation]
+                        = mNavigationBarWidthForRotation[mLandscapeRotation]
+                        = mNavigationBarWidthForRotation[mSeascapeRotation]
+                        = mNavigationBarHeightForRotation[mPortraitRotation]
+                        = mNavigationBarHeightForRotation[mUpsideDownRotation]
+                        = mNavigationBarHeightForRotation[mLandscapeRotation]
+                        = mNavigationBarHeightForRotation[mSeascapeRotation] = 0;
+	  }
+	}
+
             mEndcallBehavior = Settings.System.getIntForUser(resolver,
                     Settings.System.END_BUTTON_BEHAVIOR,
                     Settings.System.END_BUTTON_BEHAVIOR_DEFAULT,
@@ -1358,6 +1438,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.VOLUME_WAKE_SCREEN, 0, UserHandle.USER_CURRENT) == 1);
             mVolBtnMusicControls = (Settings.System.getIntForUser(resolver,
                     Settings.System.VOLBTN_MUSIC_CONTROLS, 1, UserHandle.USER_CURRENT) == 1);
+    	    mBackKillTimeout = Settings.System.getInt(resolver,
+                    Settings.System.KILL_APP_LONGPRESS_TIMEOUT, 1500);
 
             boolean keyRebindingEnabled = Settings.System.getInt(resolver,
                     Settings.System.HARDWARE_KEY_REBINDING, 0) == 1;
@@ -2408,8 +2490,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
             return -1;
         } else if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (Settings.Secure.getInt(mContext.getContentResolver(),
-                    Settings.Secure.KILL_APP_LONGPRESS_BACK, 0) == 1) {
+            if (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.KILL_APP_LONGPRESS_BACK, 0) == 1) {
                 if (down && repeatCount == 0) {
                     mHandler.postDelayed(mBackLongPress, mBackKillTimeout);
                 }

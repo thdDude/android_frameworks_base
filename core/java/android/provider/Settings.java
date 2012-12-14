@@ -1103,6 +1103,32 @@ public final class Settings {
         }
 
         /**
+         * @hide
+         * Convenience function for retrieving a single system settings value
+         * as a boolean.  Note that internally setting values are always
+         * stored as strings; this function converts the string to a boolean
+         * for you. It will only return true if the stored value is "1"
+         *
+         * @param cr The ContentResolver to access.
+         * @param name The name of the setting to retrieve.
+         * @param def Value to return if the setting is not defined.
+         *
+         * @return The setting's current value, or 'def' if it is not defined
+         * or not a valid integer.
+         */
+        public static boolean getBoolean(ContentResolver cr, String name, boolean def) {
+            String v = getString(cr, name);
+            try {
+                if(v != null)
+                    return "1".equals(v);
+                else
+                    return def;
+            } catch (NumberFormatException e) {
+                return def;
+            }
+        }
+
+        /**
          * Convenience function for updating a single settings value as an
          * integer. This will either create a new entry in the table if the
          * given name does not exist, or modify the value of the existing row
@@ -1123,6 +1149,24 @@ public final class Settings {
         public static boolean putIntForUser(ContentResolver cr, String name, int value,
                 int userHandle) {
             return putStringForUser(cr, name, Integer.toString(value), userHandle);
+        }
+
+        /**
+         * @hide
+         * Convenience function for updating a single settings value as a
+         * boolean. This will either create a new entry in the table if the
+         * given name does not exist, or modify the value of the existing row
+         * with that name.  Note that internally setting values are always
+         * stored as strings, so this function converts the given value to a
+         * string (1 or 0) before storing it.
+         * 
+         * @param cr The ContentResolver to access.
+         * @param name The name of the setting to modify.
+         * @param value The new value for the setting.
+         * @return true if the value was set, false on database errors
+         */
+        public static boolean putBoolean(ContentResolver cr, String name, boolean value) {
+            return putString(cr, name, value ? "1" : "0");
         }
 
         /**
@@ -2611,6 +2655,41 @@ public final class Settings {
         public static final String QS_DYNAMIC_WIFI = "qs_dyanmic_wifi";
 
         /**
+         * Whether to allow killing of the foreground app by long-pressing the Back button
+         * @hide
+         */
+        public static final String KILL_APP_LONGPRESS_BACK = "kill_app_longpress_back";
+
+        /**
+         * Enable Notification Toggles Icon Color
+         *
+         * @hide
+         */
+        public static final String ENABLE_TOGGLE_COLORS = "enable_toggle_colors";
+	
+         /**
+         * Enable Notification Toggles Bar
+         *
+         * @hide
+         */
+        public static final String ENABLE_TOGGLE_BAR = "enable_toggle_bar";
+
+        /**
+         * Notification Toggles Icon Color (On)
+         *
+         * @hide
+         */
+        public static final String TOGGLE_ICON_ON_COLOR = "toggle_icon_color_on";
+
+        /**
+         * Notification Toggles Icon Color (Off)
+         *
+         * @hide
+         */
+        public static final String TOGGLE_ICON_OFF_COLOR = "toggle_icon_color_off";
+>>>>>>> fb1a66d021fb9e744075749a5be888f305d224e6
+
+        /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide
@@ -2659,6 +2738,28 @@ public final class Settings {
          * @hide
          */
         public static final String NAV_BUTTONS = "nav_buttons";
+
+      /**
+         * Timeout for longpress back kill
+         * @hide
+         */
+        public static final String KILL_APP_LONGPRESS_TIMEOUT = "kill_app_longpress_timeout";
+
+      /**
+        * Navigation Bar show switch
+         *
+         * @hide
+         */
+        //public static final String NAVIGATION_BAR_SHOW = "navigation_bar_show";
+        public static final String NAVIGATION_CONTROLS = "navigation_controls";
+
+  
+      /**
+         * Height of navigation bar buttons
+         * @hide
+         */
+        public static final String NAV_BUTTONS_HEIGHT = "nav_buttons_height";
+
 
         /**
         * Notification Power Widget - Custom Brightness Mode
@@ -2934,6 +3035,58 @@ public final class Settings {
          * @hide
          */
         public static final String POWER_MENU_SILENT_ENABLED = "power_menu_silent_enabled";
+
+        /**
+         * AM/PM Style for clock options
+         * 0 - Normal AM/PM
+         * 1 - Small AM/PM
+         * 2 - No AM/PM
+         * @hide
+         */
+        public static final String STATUSBAR_CLOCK_AM_PM_STYLE = "statusbar_clock_am_pm_style";
+
+        /**
+         * Style of clock
+         * 0 - Hide Clock
+         * 1 - Right Clock
+         * 2 - Center Clock
+         * @hide
+         */
+        public static final String STATUSBAR_CLOCK_STYLE = "statusbar_clock_style";
+
+        /**
+         * Setting for clock color
+         * @hide
+         */
+        public static final String STATUS_BAR_CLOCK_COLOR = "status_bar_clock_color";
+
+        /**
+         * Shows weekday before clock time
+         * 0 - No Day
+         * 1 - Small Day
+         * 2 - Normal Day
+         * @hide
+         */
+        public static final String STATUSBAR_CLOCK_WEEKDAY = "statusbar_clock_weekday";
+
+        /**
+         * Show the pending notification counts as overlays on the statusbar
+         * @hide
+         */
+        public static final String STATUSBAR_NOTIF_COUNT = "status_bar_notif_count";
+
+	/**
+         * Whether to display high end graphics effects disabled on older devices
+         * @hide
+         */
+        public static final String HIGH_END_GFX_ENABLED = "high_end_gfx_enabled";
+
+        /**
+         * Holds the text for the Carrier label. An empty string
+         * will bring the default text back.
+         * @hide
+         */
+        public static final String CUSTOM_CARRIER_LABEL = "custom_carrier_label";
 
         /**
          * Whether to unlock the screen with the home key.  The value is boolean (1 or 0).
@@ -5132,7 +5285,6 @@ public final class Settings {
          */
         public static final String CDMA_CELL_BROADCAST_SMS =
                 "cdma_cell_broadcast_sms";
-
         /**
          * The CDMA roaming mode 0 = Home Networks, CDMA default
          *                       1 = Roaming on Affiliated networks

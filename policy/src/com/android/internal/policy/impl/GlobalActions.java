@@ -316,11 +316,9 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                         mWindowManagerFuncs.rebootSafeMode(true);
                         return true;
                     }
-
                     public boolean showDuringKeyguard() {
                         return true;
                     }
-
                     public boolean showBeforeProvisioning() {
                         return true;
                     }

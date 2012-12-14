@@ -75,6 +75,7 @@ public class StatusBarIconView extends AnimatedImageView {
 
         SettingsObserver observer = new SettingsObserver(new Handler());
         observer.observe();
+
         // We do not resize and scale system icons (on the right), only notification icons (on the
         // left).
         if (notification != null) {

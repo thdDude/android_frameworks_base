@@ -2687,7 +2687,6 @@ public final class Settings {
          * @hide
          */
         public static final String TOGGLE_ICON_OFF_COLOR = "toggle_icon_color_off";
->>>>>>> fb1a66d021fb9e744075749a5be888f305d224e6
 
         /**
          * Use the Notification Power Widget? (Who wouldn't!)

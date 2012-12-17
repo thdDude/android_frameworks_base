@@ -1266,7 +1266,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
 
         if (!mHasSystemNavBar) {
-            mHasNavigationBar = true;
             showNavBar = mContext.getResources().getBoolean(
                     com.android.internal.R.bool.config_showNavigationBar);
             // Allow a system property to override this. Used by the emulator.
@@ -1277,11 +1276,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 else if (navBarOverride.equals("0")) showNavBar = true;
             }
 
-	   mShowNavBar = Settings.System.getInt(mContext.getContentResolver(),
+	   mHasNavigationBar = Settings.System.getInt(mContext.getContentResolver(),
 		    Settings.System.NAVIGATION_CONTROLS, showNavBar ? 1 : 0) == 1;
            mNavButtonsHeight = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.NAV_BUTTONS_HEIGHT, 48);
-            if (mShowNavBar) {
+            if (mHasNavigationBar) {
             mNavigationBarHeightForRotation[mPortraitRotation]
  			= mNavigationBarHeightForRotation[mUpsideDownRotation]
 			= mNavButtonsHeight * DisplayMetrics.DENSITY_DEVICE/DisplayMetrics.DENSITY_DEFAULT;
@@ -1345,7 +1344,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         boolean updateRotation = false;
         synchronized (mLock) {
         if (!mHasSystemNavBar) {
-            mHasNavigationBar = true;
             showNavBar = mContext.getResources().getBoolean(
                     com.android.internal.R.bool.config_showNavigationBar);
             // Allow a system property to override this. Used by the emulator.
@@ -1355,11 +1353,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if      (navBarOverride.equals("1")) showNavBar = false;
                 else if (navBarOverride.equals("0")) showNavBar = true;
             }
-	    mShowNavBar = Settings.System.getInt(resolver,
+	    mHasNavigationBar = Settings.System.getInt(resolver,
 		    Settings.System.NAVIGATION_CONTROLS, showNavBar ? 1 : 0) == 1;
             mNavButtonsHeight = Settings.System.getInt(resolver,
                     Settings.System.NAV_BUTTONS_HEIGHT, 48);
-	    if (mShowNavBar) {
+	    if (mHasNavigationBar) {
             mNavigationBarHeightForRotation[mPortraitRotation]
  			= mNavigationBarHeightForRotation[mUpsideDownRotation]
 			= mNavButtonsHeight * DisplayMetrics.DENSITY_DEVICE/DisplayMetrics.DENSITY_DEFAULT;
@@ -3124,8 +3122,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         final Rect cf = mTmpContentFrame;
         final Rect vf = mTmpVisibleFrame;
 
-        final boolean hasNavBar = (isDefaultDisplay && mHasNavigationBar
-                && mNavigationBar != null && mNavigationBar.isVisibleLw());
+        final boolean hasNavBar = (isDefaultDisplay && mNavigationBar != null && mNavigationBar.isVisibleLw());
 
         final int adjust = sim & SOFT_INPUT_MASK_ADJUST;
 
@@ -5041,7 +5038,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // Use this instead of checking config_showNavigationBar so that it can be consistently
     // overridden by qemu.hw.mainkeys in the emulator.
     public boolean hasNavigationBar() {
-        return mHasNavigationBar;
+	return mHasNavigationBar;
     }
 
     @Override

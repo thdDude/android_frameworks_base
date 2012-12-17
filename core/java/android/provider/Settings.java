@@ -2662,6 +2662,13 @@ public final class Settings {
         public static final String QS_QUICK_PULLDOWN = "qs_quick_pulldown";
 
         /**
+         * Quick Settings Collapse Pane
+         *
+         * @hide
+         */
+        public static final String QS_COLLAPSE_PANEL = "qs_collapse_panel";
+  
+      /**
          * Whether to allow killing of the foreground app by long-pressing the Back button
          * @hide
          */
@@ -2694,7 +2701,6 @@ public final class Settings {
          * @hide
          */
         public static final String TOGGLE_ICON_OFF_COLOR = "toggle_icon_color_off";
-
 
         /**
          * Use the Notification Power Widget? (Who wouldn't!)

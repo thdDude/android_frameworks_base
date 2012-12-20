@@ -569,6 +569,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     dispatchMediaKeyRepeatWithWakeLock((KeyEvent)msg.obj);
                     break;
                 case MSG_DISPATCH_VOLKEY_WITH_WAKE_LOCK:
+                    mIsLongPress = true;
                     dispatchMediaKeyWithWakeLockToAudioService((KeyEvent)msg.obj);
                     dispatchMediaKeyWithWakeLockToAudioService(KeyEvent.changeAction((KeyEvent)msg.obj, KeyEvent.ACTION_UP));
                     break;
@@ -926,14 +927,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     }
                     if (targetKilled) {
                         performHapticFeedbackLw(null, HapticFeedbackConstants.LONG_PRESS, false);
-                        /*
-                        TODO: Displaying a Toast
-                        The fix for bug 7048792: Use correct WindowManager for Toast - Using
-                        the application Context instead of the activity Context to retrieve a
-                        WindowManager with no parent window causes a NPE and reboot in 4.2 if we
-                        try to display the Toast below. Disable until we can figure out a solution.
-                        */
-                        //Toast.makeText(mContext, R.string.app_killed_message, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mContext, R.string.app_killed_message, Toast.LENGTH_SHORT).show();
                         break;
                     }
                 }

@@ -2,10 +2,13 @@ package com.android.systemui.quicksettings;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.PowerManager;
+import android.os.SystemClock;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LevelListDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnLongClickListener;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -20,6 +23,7 @@ public class BatteryTile extends QuickSettingsTile implements BatteryStateChange
     private boolean charging = false;
     private int batteryLevel = 0;
     private Drawable batteryIcon;
+    private PowerManager pm;
 
     private LevelListDrawable batteryLevels;
     private LevelListDrawable chargingBatteryLevels;
@@ -41,6 +45,15 @@ public class BatteryTile extends QuickSettingsTile implements BatteryStateChange
                 startSettingsActivity(Intent.ACTION_POWER_USAGE_SUMMARY);
             }
         };
+       pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+        mOnLongClick = new OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+               pm.goToSleep(SystemClock.uptimeMillis());
+                return true;
+            }
+        };
+
     }
 
     @Override

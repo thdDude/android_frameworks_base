@@ -196,7 +196,7 @@ public class QuickSettingsController {
                     mQuickSettings.add(WIFIAP_TILE);
                 }
             } else if (tile.equals(TILE_SCREENTIMEOUT)) {
-                // Not available yet
+                mQuickSettings.add(SCREENTIMEOUT_TILE);
             } else if (tile.equals(TILE_MOBILEDATA)) {
                 if(deviceSupportsTelephony()) {
                     mQuickSettings.add(MOBILE_NETWORK_TILE);

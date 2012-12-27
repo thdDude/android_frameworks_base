@@ -2884,11 +2884,6 @@ public final class Settings {
         /**
          * @hide
          */
-        public static final String STATUSBAR_BATTERY_BAR_COLOR_LOW = "statusbar_battery_bar_color_low";
-
-        /**
-         * @hide
-         */
         public static final String STATUSBAR_BATTERY_BAR_THICKNESS = "statusbar_battery_bar_thickness";
 
         /**

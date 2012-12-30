@@ -355,6 +355,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     boolean showNavBar;
     boolean mShowNavBar;
     int mNavButtonsHeight;
+    private boolean mNavBarFirstBootFlag = true;
     int mPointerLocationMode = 0; // guarded by mLock
     int mDeviceHardwareKeys;
     boolean mHasHomeKey;
@@ -1267,19 +1268,25 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
 
         if (!mHasSystemNavBar) {
-            showNavBar = mContext.getResources().getBoolean(
+             if (mNavBarFirstBootFlag) {
+                 mNavBarFirstBootFlag = false;
+		 mHasNavigationBar = true;
+             } else {
+            	showNavBar = mContext.getResources().getBoolean(
                     com.android.internal.R.bool.config_showNavigationBar);
-            // Allow a system property to override this. Used by the emulator.
-            // See also hasNavigationBar().
-            String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
-            if (! "".equals(navBarOverride)) {
-                if      (navBarOverride.equals("1")) showNavBar = false;
-                else if (navBarOverride.equals("0")) showNavBar = true;
-            }
+            	// Allow a system property to override this. Used by the emulator.
+            	// See also hasNavigationBar().
+            	String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
+            	if (! "".equals(navBarOverride)) {
+                    if      (navBarOverride.equals("1")) showNavBar = false;
+                    else if (navBarOverride.equals("0")) showNavBar = true;
+            	}
 
-	   mHasNavigationBar = Settings.System.getInt(mContext.getContentResolver(),
+	   	mHasNavigationBar = Settings.System.getInt(mContext.getContentResolver(),
 		    Settings.System.NAVIGATION_CONTROLS, showNavBar ? 1 : 0) == 1;
-           mNavButtonsHeight = Settings.System.getInt(mContext.getContentResolver(),
+	    }
+            
+	    mNavButtonsHeight = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.NAV_BUTTONS_HEIGHT, 48);
             if (mHasNavigationBar) {
             mNavigationBarHeightForRotation[mPortraitRotation]

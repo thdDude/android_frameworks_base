@@ -352,8 +352,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     int mCurrentAppOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
     boolean mHasSoftInput = false;
     int mBackKillTimeout;
-    boolean showNavBar;
-    boolean mShowNavBar;
     int mNavButtonsHeight;
     int mPointerLocationMode = 0; // guarded by mLock
     int mDeviceHardwareKeys;
@@ -1267,18 +1265,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
 
         if (!mHasSystemNavBar) {
-            showNavBar = mContext.getResources().getBoolean(
-                    com.android.internal.R.bool.config_showNavigationBar);
-            // Allow a system property to override this. Used by the emulator.
-            // See also hasNavigationBar().
-            String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
-            if (! "".equals(navBarOverride)) {
-                if      (navBarOverride.equals("1")) showNavBar = false;
-                else if (navBarOverride.equals("0")) showNavBar = true;
-            }
-
 	   mHasNavigationBar = Settings.System.getInt(mContext.getContentResolver(),
-		    Settings.System.NAVIGATION_CONTROLS, showNavBar ? 1 : 0) == 1;
+		    Settings.System.NAVIGATION_CONTROLS, 1) == 1;
            mNavButtonsHeight = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.NAV_BUTTONS_HEIGHT, 48);
             if (mHasNavigationBar) {
@@ -1345,17 +1333,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         boolean updateRotation = false;
         synchronized (mLock) {
         if (!mHasSystemNavBar) {
-            showNavBar = mContext.getResources().getBoolean(
-                    com.android.internal.R.bool.config_showNavigationBar);
-            // Allow a system property to override this. Used by the emulator.
-            // See also hasNavigationBar().
-            String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
-            if (! "".equals(navBarOverride)) {
-                if      (navBarOverride.equals("1")) showNavBar = false;
-                else if (navBarOverride.equals("0")) showNavBar = true;
-            }
 	    mHasNavigationBar = Settings.System.getInt(resolver,
-		    Settings.System.NAVIGATION_CONTROLS, showNavBar ? 1 : 0) == 1;
+		    Settings.System.NAVIGATION_CONTROLS, 1) == 1;
             mNavButtonsHeight = Settings.System.getInt(resolver,
                     Settings.System.NAV_BUTTONS_HEIGHT, 48);
 	    if (mHasNavigationBar) {

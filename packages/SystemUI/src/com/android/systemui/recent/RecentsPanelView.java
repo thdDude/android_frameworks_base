@@ -460,10 +460,10 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
             }
         }
 
-        boolean recent_task_manager_button = true;
-
         mRecentsTaskManagerButton = (Button) findViewById(R.id.recents_task_manager_button);
         if (mRecentsTaskManagerButton != null){
+	boolean recent_task_manager_button = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.RECENT_TASK_MANAGER_BUTTON, 0) == 1;
             if (recent_task_manager_button){ //set the listener
                 mRecentsTaskManagerButton.setOnClickListener(new OnClickListener() {
                     @Override
@@ -476,7 +476,7 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
             }
         }
 
-    } /////
+    }
 
     public void setMinSwipeAlpha(float minAlpha) {
         if (mRecentsContainer instanceof RecentsScrollView){

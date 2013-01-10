@@ -92,7 +92,6 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
     private int mThumbnailWidth;
     private boolean mFitThumbnailToXY;
     private int mRecentItemLayoutId;
-    private boolean mHighEndGfx;
     private ImageView mClearRecents;
 
     public static interface RecentsScrollView {
@@ -451,8 +450,7 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
         }
 
         if (mRecentsScrim != null) {
-            mHighEndGfx = ActivityManager.isHighEndGfx();
-            if (!mHighEndGfx) {
+	    if (!ActivityManager.isHighEndGfx && !ActivityManager.overwriteHighEndGfx()) {
                 mRecentsScrim.setBackground(null);
             } else if (mRecentsScrim.getBackground() instanceof BitmapDrawable) {
                 // In order to save space, we make the background texture repeat in the Y direction

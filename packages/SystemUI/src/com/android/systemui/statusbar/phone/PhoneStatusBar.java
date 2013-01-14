@@ -1307,8 +1307,8 @@ public class PhoneStatusBar extends BaseStatusBar {
     public void showClock(boolean show) {
         if (mStatusBarView == null) return;
         ContentResolver resolver = mContext.getContentResolver();
-        View clock = mStatusBarView.findViewById(R.id.clock);
-        View cclock = mStatusBarView.findViewById(R.id.center_clock);
+        TextView clock = (TextView) mStatusBarView.findViewById(R.id.clock);
+        TextView cclock = (TextView) mStatusBarView.findViewById(R.id.center_clock);
         boolean rightClock = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.STATUSBAR_CLOCK_STYLE, 1) == 1);
         boolean centerClock = (Settings.System.getInt(mContext.getContentResolver(),

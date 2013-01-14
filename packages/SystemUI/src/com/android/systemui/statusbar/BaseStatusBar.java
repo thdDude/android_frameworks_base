@@ -39,6 +39,7 @@ import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -1203,11 +1204,14 @@ public abstract class BaseStatusBar extends SystemUI implements
                     UserHandle.USER_ALL);
         resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NAVIGATION_BAR_SHOW), false, this);
+        resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TABLET_MODE), false, this);
         }
 
         @Override
         public void onChange(boolean selfChange, Uri uri) {
-            if (uri.equals(Settings.System.getUriFor(Settings.System.HIGH_END_GFX_ENABLED))) {
+            if (uri.equals(Settings.System.getUriFor(Settings.System.HIGH_END_GFX_ENABLED)) ||
+		uri.equals(Settings.System.getUriFor(Settings.System.TABLET_MODE))) {
             	android.os.Process.killProcess(android.os.Process.myPid());
 	    }
             if (uri.equals(Settings.System.getUriFor(Settings.System.NAVIGATION_BAR_SHOW))) {

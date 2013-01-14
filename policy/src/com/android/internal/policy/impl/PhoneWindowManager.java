@@ -667,6 +667,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.KEY_APP_SWITCH_LONG_PRESS_ACTION), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.HARDWARE_KEY_REBINDING), false, this);
+             resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TABLET_MODE), false, this);
 
             updateSettings();
         }
@@ -1283,18 +1285,22 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         // SystemUI (status bar) layout policy
         int shortSizeDp = shortSize * DisplayMetrics.DENSITY_DEFAULT / density;
 
-        if (shortSizeDp < 600) {
+        ContentResolver resolver = mContext.getContentResolver();
+        boolean tabletModeOverride = Settings.System.getInt(resolver,
+                        Settings.System.TABLET_MODE, 0) == 1;
+
+        if (shortSizeDp < 600 && !tabletModeOverride) {
             // 0-599dp: "phone" UI with a separate status & navigation bar
             mHasSystemNavBar = false;
             mNavigationBarCanMove = true;
-            Settings.System.putInt(mContext.getContentResolver(),
-                    Settings.System.TABLET_UI, 0);
-        } else if (shortSizeDp < 720) {
+        } else if (shortSizeDp < 720 && !tabletModeOverride) {
             // 600+dp: "phone" UI with modifications for larger screens
             mHasSystemNavBar = false;
             mNavigationBarCanMove = false;
-            Settings.System.putInt(mContext.getContentResolver(),
-                    Settings.System.TABLET_UI, 2);
+        } else {
+            // forced "tablet" UI with a single combined status & navigation bar
+            mHasSystemNavBar = true;
+            mNavigationBarCanMove = false;
         }
 
         if (!mHasSystemNavBar) {

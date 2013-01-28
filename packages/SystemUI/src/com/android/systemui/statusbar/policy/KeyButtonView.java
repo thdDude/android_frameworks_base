@@ -395,10 +395,6 @@ public class KeyButtonView extends ImageView {
                     false, this);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(
-                    Settings.System.NAVIGATION_BAR_BUTTON_TINT),
-                    false, this);
-            resolver.registerContentObserver(
-                    Settings.System.getUriFor(
                     Settings.System.NAVIGATION_BAR_GLOW_TINT),
                     false, this);
             resolver.registerContentObserver(
@@ -431,18 +427,7 @@ public class KeyButtonView extends ImageView {
             mGlowBGColor = Settings.System.getInt(resolver,
                     Settings.System.NAVIGATION_BAR_GLOW_TINT, defaultColor);
 
-        int color = Settings.System.getInt(resolver,
-                Settings.System.NAVIGATION_BAR_BUTTON_TINT, 0x00000000);
-
             for (KeyButtonView kbv : mKeyButtonViews) {
-
-        if (color == 0x00000000) {
-            kbv.setColorFilter(null);
-        } else {
-            kbv.setColorFilter(null);
-            kbv.setColorFilter(color);
-        }
-
                 kbv.setDrawingAlpha(BUTTON_QUIESCENT_ALPHA);
 
                 if (kbv.mGlowBG != null) {

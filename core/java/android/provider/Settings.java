@@ -3177,11 +3177,11 @@ public final class Settings {
         public static final String STATUS_BAR_ALPHA = "status_bar_alpha";
 
         /**
-         * Sets transparency mode of statusbar
+         * Sets transparency mode of status and navigationbar
          * 0 = only home, 1 = keyguard and home (default), 2 = always
          * @hide
          */
-        public static final String STATUS_BAR_ALPHA_MODE = "status_bar_alpha_mode";
+        public static final String STATUS_NAV_BAR_ALPHA_MODE = "status_nav_bar_alpha_mode";
 
         /**
          * Sets color of statusbar
@@ -3777,6 +3777,12 @@ public final class Settings {
          */
         public static final String NAVIGATION_BAR_TINT = "navigation_bar_tint";
 
+         /**
+         * Navigation bar alpha
+         * @hide
+         */
+        public static final String NAVIGATION_BAR_ALPHA = "navigation_bar_alpha";
+
         /**
          * @hide
          */
@@ -4046,6 +4052,13 @@ public final class Settings {
           * @hide
           */
          public static final String VOLUME_KEY_CURSOR_CONTROL = "volume_key_cursor_control";
+
+        /**
+         * Is current activity launcher or not
+         * @hide
+         */
+        public static final String IS_HOME = "is_home";
+
 
         /**
          * toggle to "fix" the following: (found in NotificationManagerService)

@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.ResolveInfo;
 import android.hardware.input.InputManager;
 import android.os.Handler;
 import android.os.IBinder;
@@ -51,6 +52,7 @@ import com.android.systemui.recent.RecentTasksLoader;
 import com.android.systemui.recent.RecentsActivity;
 import com.android.systemui.statusbar.policy.KeyButtonView;
 
+import java.util.List;
 
 public class ExtensibleKeyButtonView extends KeyButtonView {
 
@@ -63,6 +65,7 @@ public class ExtensibleKeyButtonView extends KeyButtonView {
     final static String ACTION_RECENTS = "**recents**";
     final static String ACTION_SCREENSHOT = "**screenshot**";
     final static String ACTION_IME = "**ime**";
+    final static String ACTION_LAST_APP = "**lastapp**";
     final static String ACTION_KILL = "**kill**";
     final static String ACTION_WIDGETS = "**widgets**";
     final static String ACTION_NULL = "**null**";
@@ -208,6 +211,9 @@ public class ExtensibleKeyButtonView extends KeyButtonView {
             } else if (mClickAction.equals(ACTION_IME)) {
                 getContext().sendBroadcast(new Intent("android.settings.SHOW_INPUT_METHOD_PICKER"));
                 return;
+            } else if (mClickAction.equals(ACTION_LAST_APP)) {
+                toggleLastApp();
+                return;
             } else if (mClickAction.equals(ACTION_KILL)) {
                 mHandler.postDelayed(mKillTask,ViewConfiguration.getGlobalActionKeyTimeout());
                 return;
@@ -273,6 +279,9 @@ public class ExtensibleKeyButtonView extends KeyButtonView {
                     mBarService.toggleWidgets();
                 } catch (RemoteException e) {
                 }
+                return true;
+            } else if (mLongpress.equals(ACTION_LAST_APP)) {
+                toggleLastApp();
                 return true;
             } else if (mLongpress.equals(ACTION_RECENTS)) {
                 setId(R.id.recent_apps);
@@ -417,6 +426,34 @@ public class ExtensibleKeyButtonView extends KeyButtonView {
                 mScreenshotConnection = conn;
                 H.postDelayed(mScreenshotTimeout, 10000);
             }
+        }
+    }
+
+    private void toggleLastApp() {
+        int lastAppId = 0;
+        int looper = 1;
+        String packageName;
+        final Intent intent = new Intent(Intent.ACTION_MAIN);
+        final ActivityManager am = (ActivityManager) mContext
+                .getSystemService(Activity.ACTIVITY_SERVICE);
+        String defaultHomePackage = "com.android.launcher";
+        intent.addCategory(Intent.CATEGORY_HOME);
+        final ResolveInfo res = mContext.getPackageManager().resolveActivity(intent, 0);
+        if (res.activityInfo != null && !res.activityInfo.packageName.equals("android")) {
+            defaultHomePackage = res.activityInfo.packageName;
+        }
+        List <ActivityManager.RunningTaskInfo> tasks = am.getRunningTasks(5);
+        // lets get enough tasks to find something to switch to
+        // Note, we'll only get as many as the system currently has - up to 5
+        while ((lastAppId == 0) && (looper < tasks.size())) {
+            packageName = tasks.get(looper).topActivity.getPackageName();
+            if (!packageName.equals(defaultHomePackage) && !packageName.equals("com.android.systemui")) {
+                lastAppId = tasks.get(looper).id;
+            }
+            looper++;
+        }
+        if (lastAppId != 0) {
+            am.moveTaskToFront(lastAppId, am.MOVE_TASK_NO_USER_ACTION);
         }
     }
 

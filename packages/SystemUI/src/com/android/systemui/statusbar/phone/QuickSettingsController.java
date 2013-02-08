@@ -486,6 +486,7 @@ public class QuickSettingsController {
                 break;
             case DAYDREAM_TILE:
                 qs = new DaydreamTile(mContext, inflater, mContainerView, this);
+                break;
             case FCHARGE_TILE:
                 qs = new FChargeTile(mContext, inflater, mContainerView, this, mHandler);
                 break;

@@ -3247,6 +3247,12 @@ public final class Settings {
         public static final String EXPANDED_DESKTOP_STATE = "expanded_desktop_state";
 
         /**
+         * Expanded desktop style (with status bar or without status bar)
+         * @hide
+         */
+        public static final String EXPANDED_DESKTOP_STYLE = "expanded_desktop_style";
+
+        /**
          * Enable Menu key
          *
          * @hide
@@ -3313,11 +3319,6 @@ public final class Settings {
         */
         public static final String FCHARGE_ENABLED = "fcharge_enabled";
 
-        /**
-         * Expanded desktop style (with status bar or without status bar)
-         * @hide
-         */
-        public static final String EXPANDED_DESKTOP_STYLE = "expanded_desktop_style";
 
         /**
          * Whether to use a separate delay for "slide to unlock" and security
@@ -3943,48 +3944,73 @@ public final class Settings {
         public static final String HARDWARE_KEY_REBINDING = "hardware_key_rebinding";
 
          /**
-          * Action to perform when the home key is long-pressed. (Default is 2)
+          * Action to perform when the home key pressed. (Default is 1)
           * 0 - Nothing
-          * 1 - Menu
-          * 2 - App-switch
-          * 3 - Search
-          * 4 - Voice search
-          * 5 - In-app search
+          * 1 - Home
+          * 2 - Back
+          * 3 - Menu
+          * 4 - App-switch
+          * 5 - Search
+          * 6 - Voice Search
+          * 7 - In-App Search
+          * 8 - Power Off
+          * 9 - Notification shade toggle
+          * 10 - Expanded desktop toggle
+          * 11 - Kill App
+          * 12 - Last App
+          * 13 - Custom App
+	  * 14 - Widget Viewpager
+	  * 15 - Camera
+          * @hide
+          */
+
+         public static final String KEY_HOME_ACTION = "key_home_action";
+
+         /**
+          * Action to perform when the home key is long pressed. (Default is 4)
+          * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
           * @hide
           */
          public static final String KEY_HOME_LONG_PRESS_ACTION = "key_home_long_press_action";
 
-         /**
-          * Action to perform when the home key is double-tapped. (Default is 0)
+	 /**
+          * Action to perform when the back key is pressed. (Default is 2)
           * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
           * @hide
           */
-         public static final String KEY_HOME_DOUBLE_TAP_ACTION = "key_home_double_tap_action";
+         public static final String KEY_BACK_ACTION = "key_back_action";
 
          /**
-          * Action to perform when the menu key is pressed. (Default is 1)
+          * Action to perform when the back key is long-pressed. (Default is 8)
           * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+          * @hide
+          */
+         public static final String KEY_BACK_LONG_PRESS_ACTION = "key_back_long_press_action";
+
+         /**
+          * Action to perform when the menu key is pressed. (Default is 3)
+	  *
           * @hide
           */
          public static final String KEY_MENU_ACTION = "key_menu_action";
 
          /**
           * Action to perform when the menu key is long-pressed.
-          * (Default is 0 on devices with a search key, 3 on devices without)
+          * (Default is 0 on devices with a search key, 5 on devices without)
           * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
           * @hide
           */
          public static final String KEY_MENU_LONG_PRESS_ACTION = "key_menu_long_press_action";
 
          /**
-          * Action to perform when the assistant (search) key is pressed. (Default is 3)
+          * Action to perform when the assistant (search) key is pressed. (Default is 5)
           * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
           * @hide
           */
          public static final String KEY_ASSIST_ACTION = "key_assist_action";
 
          /**
-          * Action to perform when the camera key is pressed. (Default is 10)
+          * Action to perform when the camera key is pressed. (Default is 15)
           * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
           * @hide
           */
@@ -4013,14 +4039,14 @@ public final class Settings {
         public static final String LOCKSCREEN_MAXIMIZE_WIDGETS = "lockscreen_maximize_widgets";
 
          /**
-          * Action to perform when the assistant (search) key is long-pressed. (Default is 4)
+          * Action to perform when the assistant (search) key is long-pressed. (Default is 6)
           * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
           * @hide
           */
          public static final String KEY_ASSIST_LONG_PRESS_ACTION = "key_assist_long_press_action";
 
          /**
-          * Action to perform when the app switch key is pressed. (Default is 2)
+          * Action to perform when the app switch key is pressed. (Default is 4)
           * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
           * @hide
           */

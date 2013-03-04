@@ -33,11 +33,6 @@ public class BatteryTile extends QuickSettingsTile implements BatteryStateChange
         super(context, inflater, container, qsc);
 
         mTileLayout = R.layout.quick_settings_tile_battery;
-        batteryLevels = (LevelListDrawable) mContext.getResources().getDrawable(R.drawable.qs_sys_battery);
-        chargingBatteryLevels = (LevelListDrawable) mContext.getResources().getDrawable(R.drawable.qs_sys_battery_charging);
-
-        BatteryController controller = new BatteryController(mContext);
-        controller.addStateChangedCallback(this);
 
         mOnClick = new View.OnClickListener() {
             @Override
@@ -58,7 +53,9 @@ public class BatteryTile extends QuickSettingsTile implements BatteryStateChange
 
     @Override
     void onPostCreate() {
-        applyBatteryChanges();
+        updateTile();
+        BatteryController controller = new BatteryController(mContext);
+        controller.addStateChangedCallback(this);
         super.onPostCreate();
     }
 
@@ -66,10 +63,18 @@ public class BatteryTile extends QuickSettingsTile implements BatteryStateChange
     public void onBatteryLevelChanged(int level, boolean pluggedIn) {
         batteryLevel = level;
         charging = pluggedIn;
-        applyBatteryChanges();
+        updateResources();
     }
 
-    void applyBatteryChanges() {
+    @Override
+    public void updateResources() {
+        updateTile();
+        super.updateResources();
+    }
+
+    private synchronized void updateTile() {
+        batteryLevels = (LevelListDrawable) mContext.getResources().getDrawable(R.drawable.qs_sys_battery);
+        chargingBatteryLevels = (LevelListDrawable) mContext.getResources().getDrawable(R.drawable.qs_sys_battery_charging);
         batteryIcon = charging
                 ? chargingBatteryLevels :
                     batteryLevels;
@@ -81,9 +86,7 @@ public class BatteryTile extends QuickSettingsTile implements BatteryStateChange
                             batteryLevel)
                     : mContext.getString(R.string.status_bar_settings_battery_meter_format,
                             batteryLevel);
-
         }
-        updateQuickSettings();
     }
 
     @Override

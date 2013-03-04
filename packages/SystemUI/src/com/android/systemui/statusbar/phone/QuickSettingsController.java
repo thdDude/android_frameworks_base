@@ -213,7 +213,7 @@ public class QuickSettingsController {
             } else if (tile.equals(TILE_DAYDREAM)) {
                 qs = new DaydreamTile(mContext, inflater, mContainerView, this);
             } else if (tile.equals(TILE_FCHARGE)) {
-                qs = new FChargeTile(mContext, inflater, mContainerView, this);
+                qs = new FChargeTile(mContext, inflater, mContainerView, this, mHandler);
             } else if (tile.equals(TILE_QUIETHOURS)) {
                 qs = new QuietHoursTile(mContext, inflater, mContainerView, this);
             }

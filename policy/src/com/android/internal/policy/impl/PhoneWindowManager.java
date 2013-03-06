@@ -21,6 +21,7 @@ import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ActivityManagerNative;
 import android.app.IUiModeManager;
 import android.app.IActivityManager;
+import android.app.IUiModeManager;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.app.UiModeManager;
@@ -5120,7 +5121,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
      */
     Intent createHomeDockIntent() {
         Intent intent = null;
-        
+
         // What home does is based on the mode, not the dock state.  That
         // is, when in car mode you should be taken to car home regardless
         // of whether we are actually in a car dock.
@@ -5137,19 +5138,19 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         if (intent == null) {
             return null;
         }
-        
+
         ActivityInfo ai = intent.resolveActivityInfo(
                 mContext.getPackageManager(), PackageManager.GET_META_DATA);
         if (ai == null) {
             return null;
         }
-        
+
         if (ai.metaData != null && ai.metaData.getBoolean(Intent.METADATA_DOCK_HOME)) {
             intent = new Intent(intent);
             intent.setClassName(ai.packageName, ai.name);
             return intent;
         }
-        
+
         return null;
     }
     

@@ -211,8 +211,6 @@ public class QuickSettingsController {
                 // Not available yet
             } else if (tile.equals(TILE_LTE)) {
                 qs = new LteTile(mContext, inflater, mContainerView, this);
-            } else if (tile.equals(TILE_VOLUME)) {
-                qs = new VolumeTile(mContext, inflater, mContainerView, this);
             } else if (tile.equals(TILE_DAYDREAM)) {
                 qs = new DaydreamTile(mContext, inflater, mContainerView, this);
             } else if (tile.equals(TILE_FCHARGE)) {

@@ -211,12 +211,8 @@ public class PhoneStatusBar extends BaseStatusBar {
 
     // settings
     QuickSettingsController mQS;
-<<<<<<< HEAD
     boolean mHasSettingsPanel, mHasFlipSettings;
-=======
-    boolean mHasSettingsPanel, mHideSettingsPanel, mHasFlipSettings;
     boolean mUiModeIsToggled;
->>>>>>> b330fde... Frameworks: Add new configuration qualifier for UI change on the fly (1/3)
     SettingsPanelView mSettingsPanel;
     View mFlipSettingsView;
     QuickSettingsContainerView mSettingsContainer;
@@ -2990,109 +2986,7 @@ public class PhoneStatusBar extends BaseStatusBar {
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QS_DYNAMIC_WIFI),
                     false, this);
-<<<<<<< HEAD
-=======
 
-            cr.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.QUICK_TILES_PER_ROW),
-                    false, this);
-
-            cr.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.QUICK_TILES_PER_ROW_DUPLICATE_LANDSCAPE),
-                    false, this);
-
-            cr.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.QUICK_TILES_BG_COLOR),
-                    false, this);
-
-            cr.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.QUICK_TILES_BG_PRESSED_COLOR),
-                    false, this);
-
-            cr.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.QUICK_TILES_TEXT_COLOR),
-                    false, this);
-
-            cr.registerContentObserver(
-                    Settings.Secure.getUriFor(Settings.Secure.UI_MODE_IS_TOGGLED),
-                    false, this);
-
-            cr.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.NOTIF_WALLPAPER_ALPHA),
-                    false, this);
-
-            cr.registerContentObserver(
-                    Settings.System.getUriFor(Settings.System.NOTIF_ALPHA),
-                    false, this);
         }
     }
-
-    private void setNotificationWallpaperHelper() {
-        float wallpaperAlpha = Settings.System.getFloat(mContext.getContentResolver(), Settings.System.NOTIF_WALLPAPER_ALPHA, 0.1f);
-        String notifiBack = Settings.System.getString(mContext.getContentResolver(), Settings.System.NOTIFICATION_BACKGROUND);
-        File file = new File(NOTIF_WALLPAPER_IMAGE_PATH);
-        mNotificationPanel.setBackgroundResource(0);
-        mNotificationPanel.setBackgroundResource(R.drawable.notification_panel_bg);
-        Drawable background = mNotificationPanel.getBackground();
-        background.setAlpha(0);
-        if (!file.exists()) {
-            if (notifiBack != null && !notifiBack.isEmpty()) {
-                background.setColorFilter(Integer.parseInt(notifiBack), Mode.SRC_ATOP);
-            }
-         background.setAlpha((int) ((1-wallpaperAlpha) * 255));
-        }
-    }
-
-    private void setNotificationAlphaHelper() {
-        float notifAlpha = Settings.System.getFloat(mContext.getContentResolver(), Settings.System.NOTIF_ALPHA, 0.0f);
-        if (mPile != null) {
-            int N = mNotificationData.size();
-            for (int i=0; i<N; i++) {
-              Entry ent = mNotificationData.get(N-i-1);
-              View expanded = ent.expanded;
-              if (expanded !=null && expanded.getBackground()!=null) expanded.getBackground().setAlpha((int) ((1-notifAlpha) * 255));
-              View large = ent.getLargeView();
-              if (large != null && large.getBackground()!=null) large.getBackground().setAlpha((int) ((1-notifAlpha) * 255));
-            }
-        }
-    }
-
-    private boolean checkAutoBrightNess() {
-        return Settings.System.getIntForUser(mContext.getContentResolver(),
-                Settings.System.SCREEN_BRIGHTNESS_MODE,
-                Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL,
-                mCurrentUserId) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
-    }
-
-    private void updatePropFactorValue() {
-        mPropFactor = Float.valueOf((float) android.os.PowerManager.BRIGHTNESS_ON
-                / Integer.valueOf(mDisplay.getWidth()).floatValue());
-    }
-
-    private void doBrightNess(MotionEvent e) {
-        int screenBrightness;
-        try {
-            screenBrightness = checkMinMax(Float.valueOf((e.getRawX() * mPropFactor.floatValue()))
-                    .intValue());
-            Settings.System.putInt(mContext.getContentResolver(), "screen_brightness",
-                    screenBrightness);
-        } catch (NullPointerException e2) {
-            return;
-        }
-        double percent = ((screenBrightness / (double) 255) * 100) + 0.5;
-
-    }
-
-    private int checkMinMax(int brightness) {
-        int min = 0;
-        int max = 255;
-
-        if (min > brightness) // brightness < 0x1E
-            return min;
-        else if (max < brightness) { // brightness > 0xFF
-            return max;
->>>>>>> b330fde... Frameworks: Add new configuration qualifier for UI change on the fly (1/3)
-        }
-    }
-
 }

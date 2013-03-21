@@ -2644,6 +2644,11 @@ public final class Settings {
          * @hide
          */
         public static final String QS_COLLAPSE_PANEL = "qs_collapse_panel";
+
+        /**
+         * @hide
+         */
+        public static final String SETTINGS_TILE_COLOR = "settings_tile_color";
   
       /**
          * Whether to allow killing of the foreground app by long-pressing the Back button
@@ -3491,6 +3496,7 @@ public final class Settings {
          * @hide
          */
         public static final String PIE_START = "pie_start";
+
 
         /**
          * @hide

@@ -93,10 +93,12 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
     int mNavigationIconHints = 0;
 
     private Drawable mBackIcon, mBackLandIcon, mBackAltIcon, mBackAltLandIcon;
+
     private Drawable mRecentIcon;
     private Drawable mRecentLandIcon;
 
-    private DelegateViewHelper mDelegateHelper;
+    public DelegateViewHelper mDelegateHelper;
+
     private DeadZone mDeadZone;
 
     private SettingsObserver mSettingsObserver;

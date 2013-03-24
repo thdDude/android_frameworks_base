@@ -44,10 +44,11 @@ import android.view.View;
 import android.view.ViewConfiguration;
 
 import com.android.internal.statusbar.IStatusBarService;
+
+import com.android.systemui.R;
 import com.android.systemui.recent.RecentTasksLoader;
 import com.android.systemui.recent.RecentsActivity;
 import com.android.systemui.statusbar.policy.KeyButtonView;
-import com.android.systemui.R;
 
 
 public class ExtensibleKeyButtonView extends KeyButtonView {
@@ -62,6 +63,7 @@ public class ExtensibleKeyButtonView extends KeyButtonView {
     final static String ACTION_SCREENSHOT = "**screenshot**";
     final static String ACTION_IME = "**ime**";
     final static String ACTION_KILL = "**kill**";
+    final static String ACTION_WIDGETS = "**widgets**";
     final static String ACTION_NULL = "**null**";
 
     private static final String TAG = "Key.Ext";
@@ -211,6 +213,12 @@ public class ExtensibleKeyButtonView extends KeyButtonView {
 
                 mHandler.postDelayed(mKillTask,ViewConfiguration.getGlobalActionKeyTimeout());
                 return;
+            } else if (mClickAction.equals(ACTION_WIDGETS)) {
+                try {
+                    mBarService.toggleWidgets();
+                } catch (RemoteException e) {
+                }
+                return;
             } else {  // we must have a custom uri
                  try {
                      Intent intent = Intent.parseUri(mClickAction, 0);
@@ -257,6 +265,12 @@ public class ExtensibleKeyButtonView extends KeyButtonView {
                 return true;
             } else if (mLongpress.equals(ACTION_KILL)) {
                 mHandler.post(mKillTask);
+                return true;
+            } else if (mLongpress.equals(ACTION_WIDGETS)) {
+                try {
+                    mBarService.toggleWidgets();
+                } catch (RemoteException e) {
+                }
                 return true;
             } else if (mLongpress.equals(ACTION_RECENTS)) {
                 setId(R.id.recent_apps);

@@ -3792,6 +3792,30 @@ public final class Settings {
         public static final String DUAL_PANE_PREFS = "dual_pane_prefs";
 
         /**
+         * Widgets to show, should be separated by |
+         * @hide
+         */
+        public static final String NAVIGATION_BAR_WIDGETS = "navigation_bar_widgets";
+
+        /**
+         * Widgets background color
+         * @hide
+         */
+        public static final String NAVIGATION_BAR_WIDGETS_BG_COLOR = "navigation_bar_widgets_bg_color";
+
+        /**
+         * Widgets text color
+         * @hide
+         */
+        public static final String NAVIGATION_BAR_WIDGETS_TEXT_COLOR = "navigation_bar_widgets_text_color";
+
+        /**
+         * Widgets background transparency
+         * @hide
+         */
+        public static final String NAVIGATION_BAR_WIDGETS_ALPHA = "navigation_bar_widgets_alpha";
+
+        /**
          * Whether or not to use the app sidebar
          * @hide
          */

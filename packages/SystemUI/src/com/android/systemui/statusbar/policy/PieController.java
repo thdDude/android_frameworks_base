@@ -357,7 +357,7 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
         if (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.PIE_SEARCH, 0) == 1) {
             mNavigationSlice.addItem(constructItem(1, ButtonType.SEARCH,
-                    R.drawable.ic_sysbar_search_side, minimumImageSize));
+                    R.drawable.ic_sysbar_search, minimumImageSize));
         }
 
         // search light has a width of 6 to take the complete space that normally

@@ -533,12 +533,12 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
         }
 
         int triggerSlots = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.PIE_GRAVITY, Position.BOTTOM.FLAG);
+                Settings.System.PIE_POSITIONS, Position.BOTTOM.FLAG);
 
         triggerSlots = triggerSlots & ~mPosition.FLAG | position.FLAG;
 
         Settings.System.putInt(mContext.getContentResolver(),
-                Settings.System.PIE_GRAVITY, triggerSlots);
+                Settings.System.PIE_POSITIONS, triggerSlots);
     }
 
     @Override

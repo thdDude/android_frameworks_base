@@ -2568,6 +2568,13 @@ public final class Settings {
         public static final String PIE_CONTROLS = "pie_controls";
 
         /**
+         * Display search button in pie?
+         * The value is boolean (1 or 0).
+         * @hide
+         */
+         public static final String PIE_SEARCH = "pie_search";
+
+        /**
          * Locations of the pie in the screen.
          * (1<<0) = LEFT
          * (1<<1) = BOTTOM

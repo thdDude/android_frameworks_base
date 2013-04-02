@@ -1369,6 +1369,8 @@ public abstract class BaseStatusBar extends SystemUI implements
         resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.TABLET_MODE), false, this);
         resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.SETTINGS_TILE_COLOR), false, this);
+        resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.PIE_COLOR), false, this);
         resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.PIE_SELECTED_COLOR), false, this);
@@ -1384,6 +1386,7 @@ public abstract class BaseStatusBar extends SystemUI implements
         public void onChange(boolean selfChange, Uri uri) {
             if (uri.equals(Settings.System.getUriFor(Settings.System.HIGH_END_GFX_ENABLED)) ||
 		uri.equals(Settings.System.getUriFor(Settings.System.TABLET_MODE))||
+		uri.equals(Settings.System.getUriFor(Settings.System.SETTINGS_TILE_COLOR))||
 		uri.equals(Settings.System.getUriFor(Settings.System.PIE_COLOR))||
 		uri.equals(Settings.System.getUriFor(Settings.System.PIE_SELECTED_COLOR))||
 		uri.equals(Settings.System.getUriFor(Settings.System.PIE_OUTLINE_COLOR))||
@@ -1444,8 +1447,6 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.PIE_CONTROLS), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.PIE_POSITIONS), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.SETTINGS_TILE_COLOR), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.EXPANDED_DESKTOP_STATE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(

@@ -3544,7 +3544,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     private boolean expandedDesktopHidesStatusBar() {
-        return mExpandedDesktopStyle == 2;
+        return mExpandedDesktopStyle == 2 || (mExpandedDesktopStyle != 0 && !mHasNavigationBar);
     }
 
     private boolean expandedDesktopHidesNavigationBar() {

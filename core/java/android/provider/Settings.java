@@ -5400,12 +5400,6 @@ public final class Settings {
         public static final String KILL_APP_LONGPRESS_BACK = "kill_app_longpress_back";
 
         /**
-         * Whether to include options in power menu for rebooting into recovery or bootloader
-         * @hide
-         */
-        public static final String ADVANCED_REBOOT = "advanced_reboot";
-
-        /**
          * This are the settings to be backed up.
          *
          * NOTE: Settings are backed up and restored in the order they appear
@@ -5449,8 +5443,7 @@ public final class Settings {
             UI_INVERTED_MODE,
             UI_MODE_IS_TOGGLED,
             LOCK_SCREEN_OWNER_INFO,
-            LOCK_SCREEN_OWNER_INFO_ENABLED,
-            ADVANCED_REBOOT
+            LOCK_SCREEN_OWNER_INFO_ENABLED
         };
 
         /**

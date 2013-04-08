@@ -96,8 +96,11 @@ public class CircleBattery extends ImageView {
         public void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_BATTERY), false, this);
-            onChange(true);
+                    Settings.System.STATUS_BAR_BATTERY),
+                    false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PIE_DISABLE_STATUSBAR_INFO),
+                    false, this);
         }
 
         @Override
@@ -109,6 +112,13 @@ public class CircleBattery extends ImageView {
             mPercentage = (batteryStyle == BatteryController.BATTERY_STYLE_CIRCLE_PERCENT);
 
             setVisibility(mActivated && isBatteryPresent() ? View.VISIBLE : View.GONE);
+
+            if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.PIE_DISABLE_STATUSBAR_INFO, 0) == 1) {
+            	batteryStyle = BatteryController.BATTERY_STYLE_GONE;
+            	mActivated = false;
+            }
+
             if (mBatteryReceiver != null) {
                 mBatteryReceiver.updateRegistration();
             }

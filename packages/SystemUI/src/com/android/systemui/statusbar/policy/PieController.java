@@ -400,8 +400,7 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
         view.setMinimumHeight(minimumImageSize);
         LayoutParams lp = new LayoutParams(minimumImageSize, minimumImageSize);
         view.setLayoutParams(lp);
-        // all pie items are currently sloppy
-        PieItem item = new PieItem(mContext, mPieContainer, PieItem.SLOPPY, width, type, view);
+        PieItem item = new PieItem(mContext, mPieContainer, 0, width, type, view);
         item.setOnClickListener(this);
         return item;
     }

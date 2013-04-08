@@ -73,10 +73,6 @@ public class PieItem extends PieLayout.PieDrawable {
      * The item is selected / has the focus from the gesture.
      */
     public final static int SELECTED = 0x100;
-    /**
-     * The item has a sloppy meaning of whenever it is hit or not by the gesture.
-     */
-    public final static int SLOPPY = 0x200;
 
     public PieItem(Context context, PieLayout parent, int flags, int width, Object tag, View view) {
         mView = view;
@@ -212,7 +208,7 @@ public class PieItem extends PieLayout.PieDrawable {
 
     private boolean hit(float alpha, int radius) {
         return (alpha > mStart) && (alpha < mStart + mSweep)
-                && ((flags & SLOPPY) != 0 || (radius > mInner && radius < mOuter));
+                && (radius > mInner && radius < mOuter);
     }
 
     private Path getOutline(float scale) {

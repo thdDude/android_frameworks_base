@@ -16,7 +16,10 @@
  */
 package com.android.systemui.statusbar.policy;
 
+import android.app.ActivityManager.RunningAppProcessInfo;
+import android.app.ActivityManagerNative;
 import android.app.ActivityOptions;
+import android.app.IActivityManager;
 import android.app.SearchManager;
 import android.app.StatusBarManager;
 import android.content.ActivityNotFoundException;
@@ -26,6 +29,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.graphics.Point;
@@ -52,7 +56,9 @@ import android.view.SoundEffectConstants;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
+import android.widget.Toast;
 
+import com.android.internal.util.cm.DevUtils;
 import com.android.systemui.R;
 import com.android.systemui.statusbar.BaseStatusBar;
 import com.android.systemui.statusbar.pie.PieItem;
@@ -62,6 +68,8 @@ import com.android.systemui.statusbar.pie.PieLayout.PieSlice;
 import com.android.systemui.statusbar.pie.PieSliceContainer;
 import com.android.systemui.statusbar.pie.PieSysInfo;
 
+import java.util.List;
+
 /**
  * Controller class for the default pie control.
  * <p>
@@ -69,7 +77,7 @@ import com.android.systemui.statusbar.pie.PieSysInfo;
  * executing the actions that can be triggered by the pie control.
  */
 public class PieController implements BaseStatusBar.NavigationBarCallback,
-        PieLayout.OnSnapListener, PieItem.PieOnClickListener {
+        PieLayout.OnSnapListener, PieItem.PieOnClickListener, PieItem.PieOnLongClickListener {
     public static final String TAG = "PieController";
     public static final boolean DEBUG = false;
 
@@ -261,7 +269,9 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.PIE_SEARCH), false, this);
+                    Settings.System.NAV_BUTTONS), false, this);
+            resolver.registerContentObserver(Settings.Secure.getUriFor(
+                    Settings.Secure.KILL_APP_LONGPRESS_BACK), false, this);
         }
 
         @Override
@@ -365,35 +375,41 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
 
     private void setupNavigationItems() {
         int minimumImageSize = (int)mContext.getResources().getDimension(R.dimen.pie_item_size);
+        boolean killAppLongPress = Settings.Secure.getInt(mContext.getContentResolver(),
+                Settings.Secure.KILL_APP_LONGPRESS_BACK, 0) == 1;
+        ButtonInfo[] buttons = NavigationButtons.loadButtonMap(mContext);
 
         mNavigationSlice.clear();
-        mNavigationSlice.addItem(constructItem(2, ButtonType.BACK,
-                R.drawable.ic_sysbar_back, minimumImageSize));
-        mNavigationSlice.addItem(constructItem(2, ButtonType.HOME,
-                R.drawable.ic_sysbar_home, minimumImageSize));
-        mNavigationSlice.addItem(constructItem(2, ButtonType.RECENT,
-                R.drawable.ic_sysbar_recent, minimumImageSize));
-        if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.PIE_SEARCH, 0) == 1) {
-            mNavigationSlice.addItem(constructItem(1, ButtonType.SEARCH,
-                    R.drawable.ic_sysbar_search, minimumImageSize));
+
+        for (int i = 0; i < buttons.length; i++) {
+            if (buttons[i] != NavigationButtons.EMPTY) {
+                ButtonInfo bi = buttons[i];
+
+                // search light is at the same position as the home button
+                if (bi == NavigationButtons.HOME) {
+                    // search light has a width of 6 to take the complete space that normally
+                    // BACK HOME RECENT would occupy
+                    mSearchLight = constructItem(6, SEARCHLIGHT,
+                            SEARCHLIGHT.portResource, minimumImageSize, false);
+                    mNavigationSlice.addItem(mSearchLight);
+                }
+
+                boolean canLongPress = bi == NavigationButtons.HOME
+                        || (bi == NavigationButtons.BACK && killAppLongPress);
+                boolean isSmall = NavigationButtons.IS_SLOT_SMALL[i];
+                mNavigationSlice.addItem(constructItem(isSmall ? 1 : 2, bi,
+                        isSmall ? bi.sideResource : bi.portResource, minimumImageSize,
+                        canLongPress));
+            }
         }
-
-        // search light has a width of 6 to take the complete space that normally
-        // BACK HOME RECENT would occupy
-        mSearchLight = constructItem(6, ButtonType.SEARCHLIGHT,
-                R.drawable.search_light, minimumImageSize);
-        mNavigationSlice.addItem(mSearchLight);
-
-        mMenuButton = constructItem(1, ButtonType.MENU,
-                R.drawable.ic_sysbar_menu, minimumImageSize);
-        mNavigationSlice.addItem(mMenuButton);
+        mMenuButton = findItem(NavigationButtons.CONDITIONAL_MENU);
 
         setNavigationIconHints(mNavigationIconHints, true);
         setMenuVisibility(mShowMenu);
     }
 
-    private PieItem constructItem(int width, ButtonType type, int image, int minimumImageSize) {
+    private PieItem constructItem(int width, ButtonInfo type, int image, int minimumImageSize,
+            boolean canLongPress) {
         ImageView view = new ImageView(mContext);
         view.setImageResource(image);
         view.setMinimumWidth(minimumImageSize);
@@ -402,6 +418,9 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
         view.setLayoutParams(lp);
         PieItem item = new PieItem(mContext, mPieContainer, 0, width, type, view);
         item.setOnClickListener(this);
+        if (canLongPress) {
+            item.setOnLongClickListener(this);
+        }
         return item;
     }
 
@@ -569,6 +588,22 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
             case SEARCHLIGHT:
                 launchAssistAction(type == ButtonType.SEARCHLIGHT);
                 break;
+        }
+    }
+
+    @Override
+    public void onLongClick(PieItem item) {
+        ButtonInfo bi = (ButtonInfo) item.tag;
+        mPieContainer.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+        mPieContainer.playSoundEffect(SoundEffectConstants.CLICK);
+
+        if (bi == NavigationButtons.HOME) {
+            launchAssistAction(false);
+        } else if (bi == NavigationButtons.BACK) {
+            if (DevUtils.killForegroundApplication(mContext)) {
+                Toast.makeText(mContext, com.android.internal.R.string.app_killed_message,
+                        Toast.LENGTH_SHORT).show();
+            }
         }
     }
 

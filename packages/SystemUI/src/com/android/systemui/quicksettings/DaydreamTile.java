@@ -31,9 +31,8 @@ import com.android.systemui.statusbar.phone.QuickSettingsContainerView;
 public class DaydreamTile extends QuickSettingsTile {
     private final IDreamManager mDreamManager;
 
-    public DaydreamTile(Context context, LayoutInflater inflater,
-            QuickSettingsContainerView container, final QuickSettingsController qsc) {
-        super(context, inflater, container, qsc);
+    public DaydreamTile(Context context, final QuickSettingsController qsc) {
+        super(context, qsc);
 
         mLabel = context.getString(R.string.quick_settings_daydream);
         mDrawable = R.drawable.ic_qs_clock_circle;

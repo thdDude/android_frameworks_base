@@ -350,25 +350,28 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
 
         mNavigationSlice.clear();
 
-        for (int i = 0; i < buttons.length; i++) {
-            if (buttons[i] != NavigationButtons.EMPTY) {
-                ButtonInfo bi = buttons[i];
-
-                // search light is at the same position as the home button
-                if (bi == NavigationButtons.HOME) {
-                    // search light has a width of 6 to take the complete space that normally
-                    // BACK HOME RECENT would occupy
-                    mSearchLight = constructItem(6, SEARCHLIGHT,
-                            SEARCHLIGHT.portResource, minimumImageSize);
-                    mNavigationSlice.addItem(mSearchLight);
-                }
-
-                boolean isSmall = NavigationButtons.IS_SLOT_SMALL[i];
-                mNavigationSlice.addItem(constructItem(isSmall ? 1 : 2, bi,
-                        isSmall ? bi.sideResource : bi.portResource, minimumImageSize));
-            }
+        mNavigationSlice.addItem(constructItem(2, ButtonType.BACK,
+                R.drawable.ic_sysbar_back, minimumImageSize));
+        mNavigationSlice.addItem(constructItem(2, ButtonType.HOME,
+                R.drawable.ic_sysbar_home, minimumImageSize));
+        mNavigationSlice.addItem(constructItem(2, ButtonType.RECENT,
+                R.drawable.ic_sysbar_recent, minimumImageSize));
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.PIE_SEARCH, 0) == 1) {
+            mNavigationSlice.addItem(constructItem(1, ButtonType.SEARCH,
+                    R.drawable.ic_sysbar_search_side, minimumImageSize));
         }
-        mMenuButton = findItem(NavigationButtons.CONDITIONAL_MENU);
+
+        // search light has a width of 6 to take the complete space that normally
+        // BACK HOME RECENT would occupy
+        mSearchLight = constructItem(6, ButtonType.SEARCHLIGHT,
+                R.drawable.search_light, minimumImageSize);
+        mNavigationSlice.addItem(mSearchLight);
+
+        mMenuButton = constructItem(1, ButtonType.MENU,
+                R.drawable.ic_sysbar_menu, minimumImageSize);
+        mNavigationSlice.addItem(mMenuButton);
+>>>>>>> parent of 4c58bbd... pie control: dont have this png
 
         setNavigationIconHints(mNavigationIconHints, true);
         setMenuVisibility(mShowMenu);

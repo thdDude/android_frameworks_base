@@ -101,6 +101,7 @@ public class CircleBattery extends ImageView {
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.PIE_DISABLE_STATUSBAR_INFO),
                     false, this);
+	    onChange(true);
         }
 
         @Override

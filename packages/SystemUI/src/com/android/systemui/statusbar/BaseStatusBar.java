@@ -1554,10 +1554,6 @@ public abstract class BaseStatusBar extends SystemUI implements
                         updatePieTriggerMask(Position.LEFT.FLAG
                                         | Position.RIGHT.FLAG);
                 }
-            } else if (expandedMode == 2 && expanded && hasNavigationBar) {
-                    updatePieTriggerMask(Position.LEFT.FLAG
-                                    | Position.RIGHT.FLAG
-                                    | Position.TOP.FLAG);
             } else {
                 if (!mPieImeIsShowing) {
                     updatePieTriggerMask(Position.LEFT.FLAG

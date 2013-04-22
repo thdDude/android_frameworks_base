@@ -640,6 +640,16 @@ public abstract class BaseStatusBar extends SystemUI implements
          return new H();
     }
 
+    static int screenLayout() {
+        final int screenSize = Resources.getSystem().getConfiguration().screenLayout &
+                Configuration.SCREENLAYOUT_SIZE_MASK;
+        return screenSize;
+    }
+
+    protected boolean isScreenPortrait() {
+        return mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
+    }
+
     static void sendCloseSystemWindows(Context context, String reason) {
         if (ActivityManagerNative.isSystemReady()) {
             try {
@@ -1438,13 +1448,9 @@ public abstract class BaseStatusBar extends SystemUI implements
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.EXPANDED_DESKTOP_STATE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.EXPANDED_DESKTOP_MODE), false, this);
+                    Settings.System.EXPANDED_DESKTOP_STYLE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NAVIGATION_BAR_SHOW), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.NAVIGATION_BAR_CAN_MOVE), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.HIDE_STATUSBAR), false, this);
         }
 
         @Override
@@ -1524,60 +1530,32 @@ public abstract class BaseStatusBar extends SystemUI implements
     public void setupTriggers(boolean forceDisableBottomAndTopTrigger) {
             mForceDisableBottomAndTopTrigger = forceDisableBottomAndTopTrigger;
             int expandedMode = Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.EXPANDED_DESKTOP_MODE, 0);
+                    Settings.System.EXPANDED_DESKTOP_STYLE, 0);
             boolean expanded = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1;
             final int showByDefault = mContext.getResources().getBoolean(
                     com.android.internal.R.bool.config_showNavigationBar) ? 1 : 0;
             boolean hasNavigationBar = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.NAVIGATION_BAR_SHOW, showByDefault) == 1;
-            boolean autoHideStatusBar = Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.HIDE_STATUSBAR, 0) == 1;
-            boolean disableRightTriggerForNavbar =
-                    screenLayout() != Configuration.SCREENLAYOUT_SIZE_LARGE
-                    && !isScreenPortrait()
-                    && hasNavigationBar
-                    && ((expandedMode == 2 && expanded) || !expanded)
-                    && Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.NAVIGATION_BAR_CAN_MOVE, 1) == 1;
 
-            if ((!expanded && hasNavigationBar && !autoHideStatusBar)
+            if ((!expanded && hasNavigationBar)
                 || mForceDisableBottomAndTopTrigger) {
-                if (disableRightTriggerForNavbar) {
-                    updatePieTriggerMask(Position.LEFT.FLAG);
-                } else {
                     updatePieTriggerMask(Position.LEFT.FLAG
                                     | Position.RIGHT.FLAG);
-                }
-            } else if ((!expanded && !hasNavigationBar && !autoHideStatusBar)
-                || (expandedMode == 1 && expanded && hasNavigationBar && !autoHideStatusBar)) {
+            } else if ((!expanded && !hasNavigationBar)
+                || (expandedMode == 1 && expanded && hasNavigationBar)) {
                 if (!mPieImeIsShowing) {
-                    if (disableRightTriggerForNavbar) {
-                        updatePieTriggerMask(Position.LEFT.FLAG
-                                        | Position.BOTTOM.FLAG);
-                    } else {
                         updatePieTriggerMask(Position.LEFT.FLAG
                                         | Position.BOTTOM.FLAG
                                         | Position.RIGHT.FLAG);
-                    }
-                } else {
-                    if (disableRightTriggerForNavbar) {
-                        updatePieTriggerMask(Position.LEFT.FLAG);
-                    } else {
+		} else {
                         updatePieTriggerMask(Position.LEFT.FLAG
                                         | Position.RIGHT.FLAG);
-                    }
                 }
-            } else if (expandedMode == 2 && expanded && hasNavigationBar
-                        || !expanded && hasNavigationBar && autoHideStatusBar) {
-                if (disableRightTriggerForNavbar) {
-                    updatePieTriggerMask(Position.LEFT.FLAG
-                                    | Position.TOP.FLAG);
-                } else {
+            } else if (expandedMode == 2 && expanded && hasNavigationBar) {
                     updatePieTriggerMask(Position.LEFT.FLAG
                                     | Position.RIGHT.FLAG
                                     | Position.TOP.FLAG);
-                }
             } else {
                 if (!mPieImeIsShowing) {
                     updatePieTriggerMask(Position.LEFT.FLAG

@@ -48,7 +48,6 @@ import android.view.HapticFeedbackConstants;
 import android.view.IWindowManager;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.view.SoundEffectConstants;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
@@ -222,7 +221,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
                     inputManager.injectInputEvent(new KeyEvent(eventTime - 50, eventTime - 50,
                             KeyEvent.ACTION_DOWN, m.arg1, 0),
                             InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
-			    mPieContainer.playSoundEffect(SoundEffectConstants.CLICK);
                     inputManager.injectInputEvent(new KeyEvent(eventTime - 50, eventTime - 25,
                             KeyEvent.ACTION_UP, m.arg1, 0),
                             InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
@@ -533,7 +531,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
 
         // provide the same haptic feedback as if a virtual key is pressed
         mPieContainer.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
-	mPieContainer.playSoundEffect(SoundEffectConstants.CLICK);
 
         switch (type) {
             case BACK:

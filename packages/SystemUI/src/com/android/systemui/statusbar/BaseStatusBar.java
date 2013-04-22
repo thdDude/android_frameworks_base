@@ -1372,10 +1372,6 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.PIE_SELECTED_COLOR), false, this);
         resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.PIE_OUTLINE_COLOR), false, this);
-        resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.PIE_START), false, this);
-        resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.PIE_DISTANCE), false, this);
         }
 
         @Override
@@ -1385,9 +1381,7 @@ public abstract class BaseStatusBar extends SystemUI implements
 		uri.equals(Settings.System.getUriFor(Settings.System.SETTINGS_TILE_COLOR))||
 		uri.equals(Settings.System.getUriFor(Settings.System.PIE_COLOR))||
 		uri.equals(Settings.System.getUriFor(Settings.System.PIE_SELECTED_COLOR))||
-		uri.equals(Settings.System.getUriFor(Settings.System.PIE_OUTLINE_COLOR))||
-		uri.equals(Settings.System.getUriFor(Settings.System.PIE_START))||
-		uri.equals(Settings.System.getUriFor(Settings.System.PIE_DISTANCE))) {
+		uri.equals(Settings.System.getUriFor(Settings.System.PIE_OUTLINE_COLOR))) {
             	android.os.Process.killProcess(android.os.Process.myPid());
 	    }
             if (uri.equals(Settings.System.getUriFor(Settings.System.NAVIGATION_BAR_SHOW))) {
@@ -1564,9 +1558,7 @@ public abstract class BaseStatusBar extends SystemUI implements
 
         int width = (int) (res.getDisplayMetrics().widthPixels * 0.8f);
         int height = (int) (res.getDisplayMetrics().heightPixels * 0.8f);
-        int triggerThickness = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.PIE_START,
-                (int) (res.getDimensionPixelSize(R.dimen.pie_trigger_height)));
+        int triggerThickness = (int) (res.getDimensionPixelSize(R.dimen.pie_trigger_height));
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                 (position == Position.TOP || position == Position.BOTTOM
                         ? width : triggerThickness),

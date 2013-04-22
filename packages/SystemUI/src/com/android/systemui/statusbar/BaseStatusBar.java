@@ -1364,6 +1364,7 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.NAVIGATION_BAR_SHOW), false, this);
         resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.TABLET_MODE), false, this);
+<<<<<<< HEAD
         resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.SETTINGS_TILE_COLOR), false, this);
         resolver.registerContentObserver(Settings.System.getUriFor(
@@ -1372,16 +1373,15 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.PIE_SELECTED_COLOR), false, this);
         resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.PIE_OUTLINE_COLOR), false, this);
+=======
+>>>>>>> parent of a1841a0... PIE color
         }
 
         @Override
         public void onChange(boolean selfChange, Uri uri) {
             if (uri.equals(Settings.System.getUriFor(Settings.System.HIGH_END_GFX_ENABLED)) ||
 		uri.equals(Settings.System.getUriFor(Settings.System.TABLET_MODE))||
-		uri.equals(Settings.System.getUriFor(Settings.System.SETTINGS_TILE_COLOR))||
-		uri.equals(Settings.System.getUriFor(Settings.System.PIE_COLOR))||
-		uri.equals(Settings.System.getUriFor(Settings.System.PIE_SELECTED_COLOR))||
-		uri.equals(Settings.System.getUriFor(Settings.System.PIE_OUTLINE_COLOR))) {
+		uri.equals(Settings.System.getUriFor(Settings.System.SETTINGS_TILE_COLOR))) {
             	android.os.Process.killProcess(android.os.Process.myPid());
 	    }
             if (uri.equals(Settings.System.getUriFor(Settings.System.NAVIGATION_BAR_SHOW))) {
@@ -1582,4 +1582,5 @@ public abstract class BaseStatusBar extends SystemUI implements
         lp.gravity = position.ANDROID_GRAVITY;
         return lp;
     }
+
 }

@@ -2571,6 +2571,16 @@ public final class Settings {
         public static final String LOCKSCREEN_DISABLED = "lockscreen.disabled";
 
         /**
+         * Which lockscreen style to use. The value is an integer.
+         * ( 0 - GlowPadView    : JB     )
+         * ( 1 - MultiwaveView  : ICS    )
+         * ( 2 - Tabs           : GB     )
+         * ( 3 - Rotary         : Eclair )
+         * @hide
+         */
+        public static final String LOCKSCREEN_STYLE = "lockscreen_style";
+
+        /**
          * Stores values for custom lockscreen targets
          * @hide
          */
@@ -4047,6 +4057,7 @@ public final class Settings {
          * Whether FastPowerOn is enabled
          */
         public static final String ENABLE_FAST_POWERON = "enable_fast_poweron";
+
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings

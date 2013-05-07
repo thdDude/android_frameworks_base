@@ -28,11 +28,13 @@ import android.app.IActivityManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.res.Configuration;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -121,7 +123,6 @@ public class SearchPanelView extends FrameLayout implements
 
     private PackageManager mPackageManager;
     private Resources mResources;
-    private TargetObserver mTargetObserver;
     private ContentResolver mContentResolver;
     private String[] targetActivities = new String[5];
     private String[] longActivities = new String[5];
@@ -242,8 +243,6 @@ public class SearchPanelView extends FrameLayout implements
         // TODO: fetch views
         mGlowPadView = (GlowPadView) findViewById(R.id.glow_pad_view);
         mGlowPadView.setOnTriggerListener(mGlowPadViewListener);
-        updateSettings();
-        setDrawables();
     }
 
     private void setDrawables() {
@@ -318,8 +317,8 @@ public class SearchPanelView extends FrameLayout implements
 
     private TargetDrawable getTargetDrawable (String action, int customIconIndex){
 
-        TargetDrawable cDrawable = new TargetDrawable(mResources, mResources.getDrawable(com.android.internal.R.drawable.ic_lockscreen_camera));
-        cDrawable.setEnabled(false);
+        TargetDrawable noneDrawable = new TargetDrawable(mResources, mResources.getDrawable(R.drawable.ic_action_none));
+
 
         String customIconUri = "";
         try {
@@ -348,12 +347,15 @@ public class SearchPanelView extends FrameLayout implements
                     selector.addState(new int[] {android.R.attr.state_enabled, -android.R.attr.state_active, android.R.attr.state_focused}, iconActivated);
                     return new TargetDrawable(mResources, selector);
                 } catch (Exception e) {
+		    return noneDrawable;
                 }
             }
         }
 
-        if (action == null || action.equals("") || action.equals("none"))
-            return cDrawable;
+        if (action == null || action.equals("**none**"))
+            return noneDrawable;
+        if (action.equals(""))
+            return new TargetDrawable(mResources, mResources.getDrawable(R.drawable.ic_navbar_blank));
         if (action.equals("**screenshot**"))
             return new TargetDrawable(mResources, mResources.getDrawable(R.drawable.ic_action_screenshot));
         if (action.equals("**ime**"))
@@ -393,7 +395,7 @@ public class SearchPanelView extends FrameLayout implements
             selector.addState(new int[] {android.R.attr.state_enabled, -android.R.attr.state_active, android.R.attr.state_focused}, iconActivated);
             return new TargetDrawable(mResources, selector);
         } catch (Exception e) {
-            return cDrawable;
+            return noneDrawable;
         }
     }
 
@@ -518,12 +520,24 @@ public class SearchPanelView extends FrameLayout implements
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
 
+        // add intent actions to listen on it
+        // apps available to check if apps on external sdcard
+        // are available and reconstruct the button icons
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
+        filter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
+        mContext.registerReceiver(mBroadcastReceiver, filter);
+
+        // start observing settings
         mObserver.observe();
+        updateSettings();
+        setDrawables();
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        mContext.unregisterReceiver(mBroadcastReceiver);
         mObserver.unobserve();
     }
 
@@ -579,23 +593,17 @@ public class SearchPanelView extends FrameLayout implements
         return mResources.getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
     }
 
-    public class TargetObserver extends ContentObserver {
-        public TargetObserver(Handler handler) {
-            super(handler);
-        }
+    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
 
         @Override
-        public boolean deliverSelfNotifications() {
-            return super.deliverSelfNotifications();
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            if (Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE.equals(action)
+                        || Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE.equals(action)) {
+                setDrawables();
+            }
         }
-
-        @Override
-        public void onChange(boolean selfChange) {
-            super.onChange(selfChange);
-            setDrawables();
-            updateSettings();
-        }
-    }
+    };
 
     class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {

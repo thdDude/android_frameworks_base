@@ -23,9 +23,11 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.LayoutTransition;
 import android.app.StatusBarManager;
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
 import android.database.ContentObserver;
@@ -97,6 +99,8 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
     private DelegateViewHelper mDelegateHelper;
     private DeadZone mDeadZone;
 
+    private SettingsObserver mSettingsObserver;
+
     // workaround for LayoutTransitions leaving the nav buttons in a weird state (bug 5549288)
     final static boolean WORKAROUND_INVALID_LAYOUT = true;
     final static int MSG_CHECK_INVALID_LAYOUT = 8686;
@@ -119,6 +123,8 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
     int mNumberOfButtons = 3;
 
     int mTablet_UI = 0;
+
+    private boolean mAppIsBinded = false;
 
     public String[] mClickActions = new String[7];
     public String[] mLongpressActions = new String[7];
@@ -279,6 +285,7 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
             int mLongpressEnabled = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.SYSTEMUI_NAVBAR_LONG_ENABLE, 0);
 
+            mAppIsBinded = false;
             for (int j = 0; j < mNumberOfButtons; j++) {
 
                 if (mLongpressEnabled == 0) {
@@ -403,6 +410,7 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
             if (!drawableSet && clickAction != null && !clickAction.startsWith("**")) {
                 // here it's not a system action (**action**), so it must be an
                 // app intent
+                mAppIsBinded = true;
                 try {
                     Drawable d = mContext.getPackageManager().getActivityIcon(
                             Intent.parseUri(clickAction, 0));
@@ -752,10 +760,32 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
              group.setMotionEventSplittingEnabled(false);
          }
          mCurrentView = mRotatedViews[Surface.ROTATION_0];
+         updateSettings();
+    }
 
-         // this takes care of making the buttons
-         SettingsObserver settingsObserver = new SettingsObserver(new Handler());
-         settingsObserver.observe();
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
+        // this takes care of making the buttons
+        mSettingsObserver = new SettingsObserver(new Handler());
+        mSettingsObserver.observe();
+
+        // add intent actions to listen on it
+        // apps available to check if apps on external sdcard
+        // are available and reconstruct the button icons
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
+        filter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
+        mContext.registerReceiver(mBroadcastReceiver, filter);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+
+        mContext.unregisterReceiver(mBroadcastReceiver);
+        mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
     }
 
     public void reorient() {
@@ -829,6 +859,20 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
         return super.onInterceptTouchEvent(ev);
     }
     */
+
+
+    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            if (Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE.equals(action)
+                        || Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE.equals(action)) {
+                if (mAppIsBinded) {
+                    updateSettings();
+                }
+            }
+        }
+    };
 
     class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {

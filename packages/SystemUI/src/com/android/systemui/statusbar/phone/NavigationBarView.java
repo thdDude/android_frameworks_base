@@ -103,6 +103,8 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
 
     private SettingsObserver mSettingsObserver;
 
+    private boolean mAttached = false;
+
     // workaround for LayoutTransitions leaving the nav buttons in a weird state (bug 5549288)
     final static boolean WORKAROUND_INVALID_LAYOUT = true;
     final static int MSG_CHECK_INVALID_LAYOUT = 8686;
@@ -768,26 +770,30 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        if (!mAttached) {
+            mAttached = true;
+            // this takes care of making the buttons
+            mSettingsObserver = new SettingsObserver(new Handler());
+            mSettingsObserver.observe();
 
-        // this takes care of making the buttons
-        mSettingsObserver = new SettingsObserver(new Handler());
-        mSettingsObserver.observe();
-
-        // add intent actions to listen on it
-        // apps available to check if apps on external sdcard
-        // are available and reconstruct the button icons
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
-        filter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
-        mContext.registerReceiver(mBroadcastReceiver, filter);
+            // add intent actions to listen on it
+            // apps available to check if apps on external sdcard
+            // are available and reconstruct the button icons
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
+            filter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
+            mContext.registerReceiver(mBroadcastReceiver, filter);
+        }
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-
-        mContext.unregisterReceiver(mBroadcastReceiver);
-        mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
+        if (mAttached) {
+            mAttached = false;
+            mContext.unregisterReceiver(mBroadcastReceiver);
+            mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
+        }
     }
 
     public void reorient() {

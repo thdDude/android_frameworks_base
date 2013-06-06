@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2013 The CyanogenMod Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
+* Copyright (C) 2013 The CyanogenMod Project
+*
+* Licensed under the Apache License, Version 2.0 (the "License"); you may not
+* use this file except in compliance with the License. You may obtain a copy of
+* the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+* License for the specific language governing permissions and limitations under
+* the License.
+*/
 package com.android.systemui.statusbar.pie;
 
 import android.animation.ValueAnimator;
@@ -44,12 +44,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This is the pie layout container.
- * <p>
- * This class is responsible for displaying the content of a pie control. And
- * processing the input events from the user.<br>
- * (It handles the events for the snap points, too.)
- */
+* This is the pie layout container.
+* <p>
+* This class is responsible for displaying the content of a pie control. And
+* processing the input events from the user.<br>
+* (It handles the events for the snap points, too.)
+*/
 public class PieLayout extends FrameLayout implements View.OnTouchListener {
     public static final String TAG = "PieLayout";
     public static final boolean DEBUG = false;
@@ -123,14 +123,14 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
     };
 
     /**
-     * A {@code PieDrawable} is everything that can get displayed on the pie control.
-     * <p>
-     * This defines the basic geometry of a pie thing and provides the
-     * interface to trigger positioning and draw preparations
-     * ({@link #prepare(Position, float)}), drawing
-     * ({@link #draw(Canvas, Position)}) as well as user interaction
-     * ({@link #interact(float, int)}).
-     */
+* A {@code PieDrawable} is everything that can get displayed on the pie control.
+* <p>
+* This defines the basic geometry of a pie thing and provides the
+* interface to trigger positioning and draw preparations
+* ({@link #prepare(Position, float)}), drawing
+* ({@link #draw(Canvas, Position)}) as well as user interaction
+* ({@link #interact(float, int)}).
+*/
     public abstract static class PieDrawable {
         protected float mStart;
         protected float mSweep;
@@ -166,20 +166,20 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
     };
 
     /**
-     * A slice can contain drawable content, or can contain {@link PieItem}s which are the
-     * actual end point for user interaction.
-     */
+* A slice can contain drawable content, or can contain {@link PieItem}s which are the
+* actual end point for user interaction.
+*/
     public abstract static class PieSlice extends PieDrawable {
         /**
-         * This is the padding between items within a slice.
-         */
+* This is the padding between items within a slice.
+*/
         public final static float GAP = 3.0f;
 
         /**
-         * The slice will be considerer as important - {@link PieLayout} will try to keep
-         * these slices on screen, when placing the pie control.
-         * @see PieDrawable#flags
-         */
+* The slice will be considerer as important - {@link PieLayout} will try to keep
+* these slices on screen, when placing the pie control.
+* @see PieDrawable#flags
+*/
         public final static int IMPORTANT = 0x80;
 
         public float estimateWidth() {
@@ -247,8 +247,8 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
     private SnapPoint mActiveSnap = null;
 
     /**
-     * Listener interface for snap events on {@link SnapPoint}s.
-     */
+* Listener interface for snap events on {@link SnapPoint}s.
+*/
     public interface OnSnapListener {
         void onSnap(Position position);
     }
@@ -407,7 +407,7 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
                 Slog.d(TAG, "onDraw: (" + canvas.getWidth() + "," + canvas.getHeight() + ")");
             }
             if (mActivateStartDebug != 0) {
-                Slog.d(TAG,  "First draw within "
+                Slog.d(TAG, "First draw within "
                         + (SystemClock.uptimeMillis() - mActivateStartDebug) + " ms");
             }
             mActivateStartDebug = 0;
@@ -561,7 +561,7 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
 
         long start = SystemClock.uptimeMillis();
         if (mActivateStartDebug != 0) {
-            Slog.d(TAG,  "Layout within " + (start - mActivateStartDebug) + " ms");
+            Slog.d(TAG, "Layout within " + (start - mActivateStartDebug) + " ms");
         }
 
         int viewMask = PieDrawable.VISIBLE | mPosition.FLAG;
@@ -618,7 +618,7 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
             mCenter.y = mPadding + (int) ((getHeight() - 2 * mPadding) * mPosition.FACTOR);
         }
 
-        Slog.d(TAG,  "Layout finished within " + (SystemClock.uptimeMillis() - start) + " ms");
+        Slog.d(TAG, "Layout finished within " + (SystemClock.uptimeMillis() - start) + " ms");
     }
 
     @Override

@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2006 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright (C) 2006 The Android Open Source Project
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 package com.android.systemui.statusbar.policy;
 
@@ -50,8 +50,8 @@ import java.util.TimeZone;
 import com.android.internal.R;
 
 /**
- * Digital clock for the status bar.
- */
+* Digital clock for the status bar.
+*/
 public class Clock extends TextView {
     private boolean mAttached;
     private Calendar mCalendar;
@@ -59,21 +59,21 @@ public class Clock extends TextView {
     private SimpleDateFormat mClockFormat;
     private Locale mLocale;
 
-    private static final int AM_PM_STYLE_NORMAL  = 0;
-    private static final int AM_PM_STYLE_SMALL   = 1;
-    private static final int AM_PM_STYLE_GONE    = 2;
+    private static final int AM_PM_STYLE_NORMAL = 0;
+    private static final int AM_PM_STYLE_SMALL = 1;
+    private static final int AM_PM_STYLE_GONE = 2;
 
     protected int mAmPmStyle = AM_PM_STYLE_GONE;
 
-    public static final int WEEKDAY_STYLE_GONE   = 0;
-    public static final int WEEKDAY_STYLE_SMALL  = 1;
+    public static final int WEEKDAY_STYLE_GONE = 0;
+    public static final int WEEKDAY_STYLE_SMALL = 1;
     public static final int WEEKDAY_STYLE_NORMAL = 2;
 
     protected int mWeekdayStyle = WEEKDAY_STYLE_GONE;
 
-    public static final int STYLE_HIDE_CLOCK     = 0;
-    public static final int STYLE_CLOCK_RIGHT    = 1;
-    public static final int STYLE_CLOCK_CENTER   = 2;
+    public static final int STYLE_HIDE_CLOCK = 0;
+    public static final int STYLE_CLOCK_RIGHT = 1;
+    public static final int STYLE_CLOCK_CENTER = 2;
 
     protected int mClockStyle = STYLE_CLOCK_RIGHT;
 
@@ -258,7 +258,7 @@ public class Clock extends TextView {
         int defaultColor = 0xFF33B5E5;
 
         mAmPmStyle = Settings.System.getInt(resolver,
-                Settings.System.STATUSBAR_CLOCK_AM_PM_STYLE, AM_PM_STYLE_GONE);   
+                Settings.System.STATUSBAR_CLOCK_AM_PM_STYLE, AM_PM_STYLE_GONE);
         mClockStyle = Settings.System.getInt(resolver,
                 Settings.System.STATUSBAR_CLOCK_STYLE, STYLE_CLOCK_RIGHT);
         mWeekdayStyle = Settings.System.getInt(resolver,
@@ -280,4 +280,3 @@ public class Clock extends TextView {
             setVisibility(View.GONE);
     }
 }
-

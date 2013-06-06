@@ -1,19 +1,19 @@
 /*
- * Copyright (C) 2013 The CyanogenMod Project (Jens Doll)
- * This code is loosely based on portions of the ParanoidAndroid Project source, Copyright (C) 2012.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
+* Copyright (C) 2013 The CyanogenMod Project (Jens Doll)
+* This code is loosely based on portions of the ParanoidAndroid Project source, Copyright (C) 2012.
+*
+* Licensed under the Apache License, Version 2.0 (the "License"); you may not
+* use this file except in compliance with the License. You may obtain a copy of
+* the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+* License for the specific language governing permissions and limitations under
+* the License.
+*/
 package com.android.systemui.statusbar.policy;
 
 import android.app.Activity;
@@ -88,11 +88,11 @@ import com.android.systemui.statusbar.pie.PieSliceContainer;
 import com.android.systemui.statusbar.pie.PieSysInfo;
 
 /**
- * Controller class for the default pie control.
- * <p>
- * This class is responsible for setting up the pie control, activating it, and defining and
- * executing the actions that can be triggered by the pie control.
- */
+* Controller class for the default pie control.
+* <p>
+* This class is responsible for setting up the pie control, activating it, and defining and
+* executing the actions that can be triggered by the pie control.
+*/
 public class PieController implements BaseStatusBar.NavigationBarCallback,
         PieLayout.OnSnapListener, PieItem.PieOnClickListener, PieItem.PieOnLongClickListener {
     private static final String TAG = "PieController";
@@ -141,8 +141,8 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
     private Context mContext;
     private PieLayout mPieContainer;
     /**
-     * This is only needed for #toggleRecentApps()
-     */
+* This is only needed for #toggleRecentApps()
+*/
     private BaseStatusBar mStatusBar;
     private Vibrator mVibrator;
     private IWindowManager mWm;
@@ -166,9 +166,9 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
     private Drawable mBackAltIcon;
 
     /**
-     * Defines the positions in which pie controls may appear. This enumeration is used to store
-     * an index, a flag and the android gravity for each position.
-     */
+* Defines the positions in which pie controls may appear. This enumeration is used to store
+* an index, a flag and the android gravity for each position.
+*/
     public enum Position {
         LEFT(0, 0, android.view.Gravity.LEFT),
         BOTTOM(1, 1, android.view.Gravity.BOTTOM),
@@ -186,9 +186,9 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
         public final int FLAG;
         public final int ANDROID_GRAVITY;
         /**
-         * This is 1 when the position is not at the axis (like {@link Position.RIGHT} is
-         * at {@code Layout.getWidth()} not at {@code 0}).
-         */
+* This is 1 when the position is not at the axis (like {@link Position.RIGHT} is
+* at {@code Layout.getWidth()} not at {@code 0}).
+*/
         public final int FACTOR;
     }
 
@@ -612,7 +612,7 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
             mBackAltIcon.setColorFilter(drawableColor, Mode.SRC_ATOP);
         } else {
             mBackAltIcon.setColorFilter(null);
-        }   
+        }
     }
 
     public void activateFromTrigger(View view, MotionEvent event, Position position) {
@@ -800,7 +800,7 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
                 // wtf is this
             }
             return;
-        } else {  // we must have a custom uri
+        } else { // we must have a custom uri
             try {
                 Intent intent = Intent.parseUri(type, 0);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -943,11 +943,11 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
                         msg.arg1 = msg.arg2 = 0;
 
                         /*
-                         * remove for the time being if (mStatusBar != null &&
-                         * mStatusBar.isVisibleLw()) msg.arg1 = 1; if
-                         * (mNavigationBar != null &&
-                         * mNavigationBar.isVisibleLw()) msg.arg2 = 1;
-                         */
+* remove for the time being if (mStatusBar != null &&
+* mStatusBar.isVisibleLw()) msg.arg1 = 1; if
+* (mNavigationBar != null &&
+* mNavigationBar.isVisibleLw()) msg.arg2 = 1;
+*/
 
                         /* wait for the dialog box to close */
                         try {

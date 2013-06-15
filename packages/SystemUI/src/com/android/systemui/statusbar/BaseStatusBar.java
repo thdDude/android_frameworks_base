@@ -168,6 +168,7 @@ public abstract class BaseStatusBar extends SystemUI implements
     protected Halo mHalo = null;
     protected Ticker mTicker;
     protected TabletTicker mTabletTicker;
+    protected boolean mHaloEnabled;
     protected boolean mHaloActive;
     protected boolean mHaloTaskerActive = false;
     protected ImageView mHaloButton;
@@ -423,6 +424,10 @@ public abstract class BaseStatusBar extends SystemUI implements
         mHaloActive = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.HALO_ACTIVE, 0, UserHandle.USER_CURRENT) == 1;
 
+        mHaloEnabled = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.HALO_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
+
+
         createAndAddWindows();
         mWidgetView = new WidgetView(mContext,null);
 
@@ -505,6 +510,15 @@ public abstract class BaseStatusBar extends SystemUI implements
                 updateHalo();
             }}, UserHandle.USER_ALL);
 
+
+        // Listen for HALO enabled switch
+        mContext.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.HALO_ENABLED), false, new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                updateHalo();
+            }});
+
         updateHalo();
     }
 
@@ -516,6 +530,11 @@ public abstract class BaseStatusBar extends SystemUI implements
     }
 
     protected void updateHaloButton() {
+        if (!mHaloEnabled) {
+            mHaloButtonVisible = false;
+        } else {
+	    mHaloButtonVisible = true;
+        }
         if (mHaloButton != null) {
             mHaloButton.setVisibility(mHaloButtonVisible && !mHaloActive ? View.VISIBLE : View.GONE);
         }
@@ -525,7 +544,14 @@ public abstract class BaseStatusBar extends SystemUI implements
         mHaloActive = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.HALO_ACTIVE, 0, UserHandle.USER_CURRENT) == 1;
 
+        mHaloEnabled = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.HALO_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
+
         updateHaloButton();
+
+        if (!mHaloEnabled) {
+          mHaloActive = false;
+        }
 
         if (mHaloActive) {
             if (mHalo == null) {

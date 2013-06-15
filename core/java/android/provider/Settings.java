@@ -3758,6 +3758,11 @@ public final class Settings {
         public static final String HALO_ACTIVE = "halo_active";
 
         /**
+         * @hide
+         */
+        public static final String HALO_SIZE = "halo_size";
+
+        /**
          * HALO reversed?, should default to 1 (yes, reverse)
          * @hide
          */
@@ -3800,6 +3805,12 @@ public final class Settings {
          * @hide
          */
         public static final String HALO_GONE = "halo_gone";
+
+        /**
+         * HALO enabled, should default to 0 (no, HALO is disabled)
+         * @hide
+         */
+        public static final String HALO_ENABLED = "halo_enabled";
 
         /**
          * Automatic keyboard rotation timeout.  0 to disable completely.
@@ -4028,10 +4039,6 @@ public final class Settings {
          */
         public static final String VOLUME_KEYS_CONTROL_RING_STREAM = "volume_keys_control_ring_stream";
 
-        /**
-         * @hide
-         */
-        public static final String HALO_SIZE = "halo_size";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings

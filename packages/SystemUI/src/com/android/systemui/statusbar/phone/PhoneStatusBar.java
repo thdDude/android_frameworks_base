@@ -1645,6 +1645,14 @@ public class PhoneStatusBar extends BaseStatusBar {
         if ((mDisabled & StatusBarManager.DISABLE_EXPAND) != 0) {
             return ;
         }
+<<<<<<< HEAD
+=======
+        // don't allow expanding via e.g. service call while status bar is hidden
+        // due to expanded desktop
+        if (mExpandedDesktopState == 2) {
+            return;
+        }
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
 
         mNotificationPanel.expand();
         if (mHasFlipSettings && mScrollView.getVisibility() != View.VISIBLE) {
@@ -1712,6 +1720,14 @@ public class PhoneStatusBar extends BaseStatusBar {
         if ((mDisabled & StatusBarManager.DISABLE_EXPAND) != 0) {
             return;
         }
+<<<<<<< HEAD
+=======
+        // don't allow expanding via e.g. service call while status bar is hidden
+        // due to expanded desktop
+        if (mExpandedDesktopState == 2) {
+            return;
+        }
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
 
         // Settings are not available in setup
         if (!mUserSetup) return;
@@ -2277,9 +2293,19 @@ public class PhoneStatusBar extends BaseStatusBar {
         // hide pie triggers when keyguard is visible
         try {
             if (mWindowManagerService.isKeyguardLocked()) {
+<<<<<<< HEAD
                 disablePie(true);
             } else {
                 disablePie(false);
+=======
+                updatePieTriggerMask(Position.BOTTOM.FLAG
+                        | Position.TOP.FLAG);
+            } else {
+                updatePieTriggerMask(Position.LEFT.FLAG
+                        | Position.BOTTOM.FLAG
+                        | Position.RIGHT.FLAG
+                        | Position.TOP.FLAG);
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
             }
         } catch (RemoteException e) {
             // nothing else to do ...

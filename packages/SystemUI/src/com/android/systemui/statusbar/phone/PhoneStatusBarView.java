@@ -167,7 +167,14 @@ public class PhoneStatusBarView extends PanelBar {
         mLastFullyOpenedPanel = null;
 
         // show up you pie controls
+<<<<<<< HEAD
         mBar.setupTriggers(false);
+=======
+        mBar.updatePieTriggerMask(Position.LEFT.FLAG
+                | Position.TOP.FLAG
+                | Position.RIGHT.FLAG
+                | Position.TOP.FLAG);
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
     }
 
     @Override
@@ -178,7 +185,15 @@ public class PhoneStatusBarView extends PanelBar {
         }
 
         // back off you pie controls!
+<<<<<<< HEAD
         mBar.setupTriggers(true);
+=======
+        if (mShouldFade) {
+            mBar.updatePieTriggerMask(Position.LEFT.FLAG
+                    | Position.RIGHT.FLAG
+                    | Position.TOP.FLAG);
+        }
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
 
         mFadingPanel = openPanel;
         mLastFullyOpenedPanel = openPanel;

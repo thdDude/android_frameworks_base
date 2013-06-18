@@ -43,7 +43,10 @@ import com.android.systemui.statusbar.policy.PieController.Position;
 public class PieItem extends PieLayout.PieDrawable {
 
     private PieLayout mPieLayout;
+<<<<<<< HEAD
     private Context mContext;
+=======
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
 
     private Paint mBackgroundPaint = new Paint();
     private Paint mSelectedPaint = new Paint();
@@ -94,9 +97,13 @@ public class PieItem extends PieLayout.PieDrawable {
      */
     public final static int CAN_LONG_PRESS = 0x400;
 
+<<<<<<< HEAD
     public PieItem(Context context, PieLayout parent, int flags, int width, String tag,
                 String longTag, View view, int iconType) {
         mContext = context;
+=======
+    public PieItem(Context context, PieLayout parent, int flags, int width, Object tag, View view) {
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
         mView = view;
         mPieLayout = parent;
         mPieIconType = iconType;

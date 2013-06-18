@@ -36,6 +36,10 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.FrameLayout;
 
+<<<<<<< HEAD:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
+=======
+import com.android.systemui.statusbar.policy.PieController.Position;
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
 import com.android.systemui.R;
 import com.android.systemui.statusbar.BaseStatusBar;
 import com.android.systemui.statusbar.policy.PieController.Position;
@@ -44,12 +48,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+<<<<<<< HEAD:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
 * This is the pie layout container.
 * <p>
 * This class is responsible for displaying the content of a pie control. And
 * processing the input events from the user.<br>
 * (It handles the events for the snap points, too.)
 */
+=======
+ * This is the pie layout container.
+ * <p>
+ * This class is responsible for displaying the content of a pie control. And
+ * processing the input events from the user.<br>
+ * (It handles the events for the snap points, too.)
+ */
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
 public class PieLayout extends FrameLayout implements View.OnTouchListener {
     public static final String TAG = "PieLayout";
     public static final boolean DEBUG = false;
@@ -58,8 +71,15 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
     /* DEBUG */
     private long mActivateStartDebug = 0;
 
+<<<<<<< HEAD:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
     private static final int TIME_FADEIN = 600;
     private static final int TIME_FADEIN_DELAY = 1000;
+=======
+    private static final int TIME_FADEIN = 300;
+    private static final int TIME_FADEIN_DELAY = 400;
+
+    private static final int COLOR_BACKGROUND = 0xee000000;
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
 
     private Paint mBackgroundPaint = new Paint();
     private float mBackgroundFraction;
@@ -79,6 +99,7 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
     private boolean mActive = false;
     private int mPointerId;
     private Point mCenter = new Point(0, 0);
+<<<<<<< HEAD:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
     private Position mPosition = Position.LEFT;
     private Position mLayoutDoneForPosition;
     private int mPieTriggerMask;
@@ -86,6 +107,10 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
                 | Position.BOTTOM.FLAG
                 | Position.RIGHT.FLAG
                 | Position.TOP.FLAG;
+=======
+    private Position mPosition = Position.BOTTOM;
+    private Position mLayoutDoneForPosition;
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
 
     private Handler mHandler;
     private Runnable mLongPressRunnable = new Runnable() {
@@ -123,6 +148,7 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
     };
 
     /**
+<<<<<<< HEAD:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
 * A {@code PieDrawable} is everything that can get displayed on the pie control.
 * <p>
 * This defines the basic geometry of a pie thing and provides the
@@ -131,6 +157,16 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
 * ({@link #draw(Canvas, Position)}) as well as user interaction
 * ({@link #interact(float, int)}).
 */
+=======
+     * A {@code PieDrawable} is everything that can get displayed on the pie control.
+     * <p>
+     * This defines the basic geometry of a pie thing and provides the
+     * interface to trigger positioning and draw preparations
+     * ({@link #prepare(Position, float)}), drawing
+     * ({@link #draw(Canvas, Position)}) as well as user interaction
+     * ({@link #interact(float, int)}).
+     */
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
     public abstract static class PieDrawable {
         protected float mStart;
         protected float mSweep;
@@ -176,10 +212,17 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
         public final static float GAP = 3.0f;
 
         /**
+<<<<<<< HEAD:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
 * The slice will be considerer as important - {@link PieLayout} will try to keep
 * these slices on screen, when placing the pie control.
 * @see PieDrawable#flags
 */
+=======
+         * The slice will be considerer as important - {@link PieLayout} will try to keep
+         * these slices on screen, when placing the pie control.
+         * @see PieDrawable#flags
+         */
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
         public final static int IMPORTANT = 0x80;
 
         public float estimateWidth() {
@@ -242,7 +285,11 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
         public final Position position;
     }
 
+<<<<<<< HEAD:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
     private int mTriggerSlots;
+=======
+    private int mSnapPointMask = 0;
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
     private SnapPoint[] mSnapPoints = new SnapPoint[Position.values().length];
     private SnapPoint mActiveSnap = null;
 
@@ -254,6 +301,7 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
     }
     private OnSnapListener mOnSnapListener = null;
 
+<<<<<<< HEAD:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
     private final class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
@@ -291,6 +339,8 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
     }
     private SettingsObserver mSettingsObserver;
 
+=======
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
     public PieLayout(Context context) {
         super(context);
 
@@ -299,6 +349,12 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
 
         setDrawingCacheEnabled(false);
         setVisibility(View.GONE);
+<<<<<<< HEAD:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
+=======
+        setWillNotDraw(false);
+        setFocusable(true);
+        setOnTouchListener(this);
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
 
         getDimensions();
         getColors();
@@ -315,6 +371,17 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
         mOnSnapListener = onSnapListener;
     }
 
+<<<<<<< HEAD:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
+=======
+    /**
+     * Tells the Layout where to show snap points.
+     * @param mask is a mask that corresponds to {@link Position}{@code .FLAG}.
+     */
+    public void setSnapPoints(int mask) {
+        mSnapPointMask = mask;
+    }
+
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
     private void getDimensions() {
         mPieScale = Settings.System.getFloat(mContext.getContentResolver(),
                 Settings.System.PIE_SIZE, 1.1f);
@@ -373,6 +440,7 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
         }
 
         mActiveSnap = null;
+<<<<<<< HEAD:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
         for (Position g : Position.values()) {
             if ((mPieTriggerMask & g.FLAG) != 0) {
                 if ((mTriggerSlots & g.FLAG) == 0) {
@@ -381,6 +449,20 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
                     } else {
                         mSnapPoints[g.INDEX] = new SnapPoint(width / 2, g.FACTOR * height, g);
                     }
+=======
+        // reuse already created snap points
+        for (Position g : Position.values()) {
+            if ((mSnapPointMask & g.FLAG) != 0) {
+                int x = width / 2;
+                int y = height / 2;
+                if (g == Position.LEFT || g == Position.RIGHT) {
+                    x = g.FACTOR * width;
+                } else {
+                    y = g.FACTOR * height;
+                }
+                if (mSnapPoints[g.INDEX] != null) {
+                    mSnapPoints[g.INDEX].reposition(x, y);
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
                 } else {
                     mSnapPoints[g.INDEX] = null;
                 }
@@ -639,6 +721,11 @@ public class PieLayout extends FrameLayout implements View.OnTouchListener {
 
         mActivateStartDebug = SystemClock.uptimeMillis();
 
+<<<<<<< HEAD:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
+=======
+        getDimensions();
+
+>>>>>>> parent of d4bb3bc... Pie controls: A new way of activation:packages/SystemUI/src/com/android/systemui/statusbar/pie/PieLayout.java
         mPosition = position;
         mLayoutDoneForPosition = null;
         mActive = true;

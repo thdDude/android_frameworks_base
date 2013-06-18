@@ -170,23 +170,15 @@ public abstract class BaseStatusBar extends SystemUI implements
             new ArrayList<NavigationBarCallback>();
 
     // Pie Control
-    protected int mExpandedDesktopState;
     protected PieController mPieController;
     protected PieLayout mPieContainer;
     private int mPieTriggerSlots;
-<<<<<<< HEAD
     public int mPieTriggerMask = Position.LEFT.FLAG
             | Position.BOTTOM.FLAG
             | Position.RIGHT.FLAG
             | Position.TOP.FLAG;
     private boolean mForceDisableBottomAndTopTrigger = false;
     private boolean mDisablePie = false;
-=======
-    private int mPieTriggerMask = Position.LEFT.FLAG
-            | Position.BOTTOM.FLAG
-            | Position.RIGHT.FLAG
-            | Position.TOP.FLAG;
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
     private View[] mPieTrigger = new View[Position.values().length];
     private PieSettingsObserver mSettingsObserver;
 
@@ -227,30 +219,12 @@ public abstract class BaseStatusBar extends SystemUI implements
                                         + event.getAxisValue(MotionEvent.AXIS_Y) + ") with position: "
                                         + tracker.position.name());
                             }
-<<<<<<< HEAD
                             // send the activation to the controller
                             mPieController.activateFromTrigger(v, event, tracker.position);
                             // forward a spoofed ACTION_DOWN event
                             MotionEvent echo = event.copy();
                             echo.setAction(MotionEvent.ACTION_DOWN);
                             return mPieContainer.onTouch(v, echo);
-=======
-                            if (tracker.position == Position.BOTTOM
-                                    && mPieController.isSearchLightEnabled()) {
-                                // if we are at the bottom and nothing else is there, use a
-                                // search light!
-                                showSearchPanel();
-                            } else {
-                                // set the snap points depending on current trigger and mask
-                                mPieContainer.setSnapPoints(mPieTriggerMask & ~mPieTriggerSlots);
-                                // send the activation to the controller
-                                mPieController.activateFromTrigger(v, event, tracker.position);
-                                // forward a spoofed ACTION_DOWN event
-                                MotionEvent echo = event.copy();
-                                echo.setAction(MotionEvent.ACTION_DOWN);
-                                return mPieContainer.onTouch(v, echo);
-                            }
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
                         }
                         break;
                     default:
@@ -459,21 +433,15 @@ public abstract class BaseStatusBar extends SystemUI implements
             }
         }, filter);
 
-<<<<<<< HEAD
         mPieController = new PieController(mContext);
         mPieController.attachTo(this);
         addNavigationBarCallback(mPieController);
 
-=======
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
         mSettingsObserver = new PieSettingsObserver(new Handler());
 
         // this calls attachPie() implicitly
         mSettingsObserver.onChange(true);
-<<<<<<< HEAD
 
-=======
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
         mSettingsObserver.observe();
     }
 
@@ -1388,7 +1356,6 @@ public abstract class BaseStatusBar extends SystemUI implements
         return km.inKeyguardRestrictedInputMode();
     }
 
-<<<<<<< HEAD
 
     private static class SettingsObserver extends ContentObserver {
         private Handler mHandler;
@@ -1429,8 +1396,6 @@ public abstract class BaseStatusBar extends SystemUI implements
         }
     }
 
-=======
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
     public void addNavigationBarCallback(NavigationBarCallback callback) {
         mNavigationCallbacks.add(callback);
     }
@@ -1460,10 +1425,6 @@ public abstract class BaseStatusBar extends SystemUI implements
         super.onConfigurationChanged(newConfig);
 
         if (DEBUG) Slog.d(TAG, "Configuration changed! Update pie triggers");
-<<<<<<< HEAD
-=======
-
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
         attachPie();
     }
 
@@ -1477,7 +1438,6 @@ public abstract class BaseStatusBar extends SystemUI implements
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.PIE_CONTROLS), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
-<<<<<<< HEAD
                     Settings.System.PIE_GRAVITY), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.PIE_TRIGGER_SIZE), false, this);
@@ -1485,23 +1445,16 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.PIE_TRIGGER_SHOW), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.PIE_SOFTKEYBOARD_IS_SHOWING), false, this);
-=======
-                    Settings.System.PIE_POSITIONS), false, this);
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.EXPANDED_DESKTOP_STATE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.EXPANDED_DESKTOP_STYLE), false, this);
-<<<<<<< HEAD
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NAVIGATION_BAR_SHOW), false, this);
-=======
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
         }
 
         @Override
         public void onChange(boolean selfChange) {
-<<<<<<< HEAD
             mPieTriggerSlots = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.PIE_GRAVITY, Position.LEFT.FLAG);
             mPieShowTrigger = Settings.System.getInt(mContext.getContentResolver(),
@@ -1513,28 +1466,11 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.PIE_SOFTKEYBOARD_IS_SHOWING, 0) == 1
                     && Settings.System.getFloat(mContext.getContentResolver(),
                     Settings.System.PIE_ADJUST_TRIGGER_FOR_IME, 1) == 1;
-=======
-            ContentResolver resolver = mContext.getContentResolver();
-
-            mPieTriggerSlots = Settings.System.getInt(resolver,
-                    Settings.System.PIE_POSITIONS, Position.BOTTOM.FLAG);
-
-            boolean expanded = Settings.System.getInt(resolver,
-                    Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1;
-            if (expanded) {
-                mExpandedDesktopState = Settings.System.getInt(resolver,
-                        Settings.System.EXPANDED_DESKTOP_STYLE, 0);
-            } else {
-                mExpandedDesktopState = 0;
-            }
-
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
             attachPie();
         }
     }
 
     private boolean isPieEnabled() {
-<<<<<<< HEAD
         boolean expanded = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1;
         int pie = Settings.System.getInt(mContext.getContentResolver(),
@@ -1546,21 +1482,11 @@ public abstract class BaseStatusBar extends SystemUI implements
     public void disablePie(boolean disable) {
         mDisablePie = disable;
         attachPie();
-=======
-        int pie = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.PIE_CONTROLS, 0);
-
-        return (pie == 1 && mExpandedDesktopState != 0) || pie == 2;
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
     }
 
     private void attachPie() {
         if (isPieEnabled()) {
-<<<<<<< HEAD
             setupTriggers(false);
-=======
-
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
             // Create our container, if it does not exist already
             if (mPieContainer == null) {
                 mPieContainer = new PieLayout(mContext);
@@ -1580,19 +1506,9 @@ public abstract class BaseStatusBar extends SystemUI implements
                 lp.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_BEHIND;
 
                 mWindowManager.addView(mPieContainer, lp);
-<<<<<<< HEAD
                 if (mPieController != null) {
                     mPieController.attachTo(mPieContainer);
                 }
-=======
-                // once we need a pie controller, we create one and keep it forever ...
-                if (mPieController == null) {
-                    mPieController = new PieController(mContext);
-                    mPieController.attachStatusBar(this);
-                    addNavigationBarCallback(mPieController);
-                }
-                mPieController.attachContainer(mPieContainer);
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
             }
 
             // add or update pie triggers
@@ -1610,7 +1526,6 @@ public abstract class BaseStatusBar extends SystemUI implements
                     mPieTrigger[i] = null;
                 }
             }
-<<<<<<< HEAD
         }
     }
 
@@ -1667,22 +1582,6 @@ public abstract class BaseStatusBar extends SystemUI implements
         // first we check, if it would make a change
         if ((mPieTriggerSlots & mPieTriggerMask) != oldState
                 || mForceDisableBottomAndTopTrigger) {
-=======
-            // detach from the pie container and unregister observers and receivers
-            if (mPieController != null) {
-                mPieController.detachContainer();
-                mPieContainer = null;
-            }
-        }
-    }
-
-    public void updatePieTriggerMask(int newMask) {
-        int oldState = mPieTriggerSlots & mPieTriggerMask;
-        mPieTriggerMask = newMask;
-
-        // first we check, if it would make a change
-        if ((mPieTriggerSlots & mPieTriggerMask) != oldState) {
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
             if (isPieEnabled()) {
                 refreshPieTriggers();
             }
@@ -1701,25 +1600,16 @@ public abstract class BaseStatusBar extends SystemUI implements
                 trigger.setOnTouchListener(mPieTriggerOnTouchHandler);
 
                 if (DEBUG) {
-<<<<<<< HEAD
                     Slog.d(TAG, "addPieTrigger on " + g.INDEX
                             + " with position: " + g + " : " + trigger.toString());
                 }
                 showTrigger(trigger, DEBUG || mPieShowTrigger);
-=======
-                    trigger.setVisibility(View.VISIBLE);
-                    trigger.setBackgroundColor(0x77ff0000);
-                    Slog.d(TAG, "addPieTrigger on " + g.INDEX
-                            + " with position: " + g + " : " + trigger.toString());
-                }
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
                 mWindowManager.addView(trigger, getPieTriggerLayoutParams(g));
                 mPieTrigger[g.INDEX] = trigger;
             } else if (trigger != null && (mPieTriggerSlots & mPieTriggerMask & g.FLAG) == 0) {
                 mWindowManager.removeView(trigger);
                 mPieTrigger[g.INDEX] = null;
             } else if (trigger != null) {
-<<<<<<< HEAD
                 showTrigger(trigger, DEBUG || mPieShowTrigger);
                 mWindowManager.updateViewLayout(trigger, getPieTriggerLayoutParams(g));
             }
@@ -1775,42 +1665,7 @@ public abstract class BaseStatusBar extends SystemUI implements
             lp.gravity = position.ANDROID_GRAVITY | Gravity.TOP;
         } else {
             lp.gravity = position.ANDROID_GRAVITY;
-=======
-                mWindowManager.updateViewLayout(trigger, getPieTriggerLayoutParams(g));
-            }
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
         }
         return lp;
     }
-
-    private WindowManager.LayoutParams getPieTriggerLayoutParams(Position position) {
-        final Resources res = mContext.getResources();
-
-        int width = (int) (res.getDisplayMetrics().widthPixels * 0.8f);
-        int height = (int) (res.getDisplayMetrics().heightPixels * 0.8f);
-        int triggerThickness = (int) (res.getDimensionPixelSize(R.dimen.pie_trigger_height));
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                (position == Position.TOP || position == Position.BOTTOM
-                        ? width : triggerThickness),
-                (position == Position.LEFT || position == Position.RIGHT
-                        ? height : triggerThickness),
-                WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL,
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                        | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                        | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
-                        /* | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM */,
-                PixelFormat.TRANSLUCENT);
-        // This title is for debugging only. See: dumpsys window
-        lp.setTitle("PieTrigger" + position.name());
-        if (position == Position.LEFT || position == Position.RIGHT) {
-            lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED
-                    | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
-        } else {
-            lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED
-                    | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING;
-        }
-        lp.gravity = position.ANDROID_GRAVITY;
-        return lp;
-    }
-
 }

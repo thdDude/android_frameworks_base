@@ -16,16 +16,10 @@
 */
 package com.android.systemui.statusbar.policy;
 
-<<<<<<< HEAD
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
-=======
-import android.app.ActivityManager.RunningAppProcessInfo;
-import android.app.ActivityManagerNative;
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
 import android.app.ActivityOptions;
-import android.app.IActivityManager;
 import android.app.SearchManager;
 import android.app.StatusBarManager;
 import android.content.ActivityNotFoundException;
@@ -36,10 +30,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-<<<<<<< HEAD
 import android.content.pm.PackageManager.NameNotFoundException;
-=======
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.content.ServiceConnection;
@@ -52,10 +43,7 @@ import android.hardware.input.InputManager;
 import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Handler;
-<<<<<<< HEAD
 import android.os.IBinder;
-=======
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
 import android.os.Message;
 import android.os.Messenger;
 import android.os.PowerManager;
@@ -80,11 +68,9 @@ import android.view.MotionEvent;
 import android.view.SoundEffectConstants;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
-import android.view.accessibility.AccessibilityEvent;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-<<<<<<< HEAD
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
@@ -92,9 +78,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import com.android.internal.statusbar.IStatusBarService;
-=======
-import com.android.internal.util.cm.DevUtils;
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
 import com.android.systemui.R;
 import com.android.systemui.statusbar.BaseStatusBar;
 import com.android.systemui.statusbar.pie.PieItem;
@@ -104,10 +87,7 @@ import com.android.systemui.statusbar.pie.PieLayout.PieSlice;
 import com.android.systemui.statusbar.pie.PieSliceContainer;
 import com.android.systemui.statusbar.pie.PieSysInfo;
 
-import java.util.List;
-
 /**
-<<<<<<< HEAD
 * Controller class for the default pie control.
 * <p>
 * This class is responsible for setting up the pie control, activating it, and defining and
@@ -151,20 +131,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
         "**null**",
         "**null**"
     };
-=======
- * Controller class for the default pie control.
- * <p>
- * This class is responsible for setting up the pie control, activating it, and defining and
- * executing the actions that can be triggered by the pie control.
- */
-public class PieController implements BaseStatusBar.NavigationBarCallback,
-        PieLayout.OnSnapListener, PieItem.PieOnClickListener, PieItem.PieOnLongClickListener {
-    public static final String TAG = "PieController";
-    public static final boolean DEBUG = false;
-
-    private static final ButtonInfo SEARCHLIGHT = new ButtonInfo(0, 0, 0,
-            R.drawable.search_light, R.drawable.search_light, 0);
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
 
     public static final float EMPTY_ANGLE = 10;
     public static final float START_ANGLE = 180 + EMPTY_ANGLE;
@@ -175,13 +141,8 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
     private Context mContext;
     private PieLayout mPieContainer;
     /**
-<<<<<<< HEAD
 * This is only needed for #toggleRecentApps()
 */
-=======
-     * This is only needed for #toggleRecentApps()
-     */
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
     private BaseStatusBar mStatusBar;
     private Vibrator mVibrator;
     private IWindowManager mWm;
@@ -205,15 +166,9 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
     private Drawable mBackAltIcon;
 
     /**
-<<<<<<< HEAD
 * Defines the positions in which pie controls may appear. This enumeration is used to store
 * an index, a flag and the android gravity for each position.
 */
-=======
-     * Defines the positions in which pie controls may appear. This enumeration is used to store
-     * an index, a flag and the android gravity for each position.
-     */
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
     public enum Position {
         LEFT(0, 0, android.view.Gravity.LEFT),
         BOTTOM(1, 1, android.view.Gravity.BOTTOM),
@@ -231,7 +186,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
         public final int FLAG;
         public final int ANDROID_GRAVITY;
         /**
-<<<<<<< HEAD
 * This is 1 when the position is not at the axis (like {@link Position.RIGHT} is
 * at {@code Layout.getWidth()} not at {@code 0}).
 */
@@ -240,16 +194,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
 
     private Position mPosition;
 
-=======
-         * This is 1 when the position is not at the axis (like {@link Position.RIGHT} is
-         * at {@code Layout.getWidth()} not at {@code 0}).
-         */
-        public final int FACTOR;
-    }
-
-    private Position mPosition;
-
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
     public static class Tracker {
         public static float sDistance;
         private float initialX = 0;
@@ -378,7 +322,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-<<<<<<< HEAD
                     Settings.System.PIE_BUTTON_COLOR), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.PIE_BUTTON_PRESSED_COLOR), false, this);
@@ -411,11 +354,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
                         false,
                         this);
             }
-=======
-                    Settings.System.NAV_BUTTONS), false, this);
-            resolver.registerContentObserver(Settings.Secure.getUriFor(
-                    Settings.Secure.KILL_APP_LONGPRESS_BACK), false, this);
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
         }
 
         @Override
@@ -453,20 +391,16 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
     public PieController(Context context) {
         mContext = context;
 
-<<<<<<< HEAD
         mActivityManager = (ActivityManager) mContext.getSystemService(Activity.ACTIVITY_SERVICE);
         mBarService = IStatusBarService.Stub.asInterface(
                 ServiceManager.getService(Context.STATUS_BAR_SERVICE));
 
-=======
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
         mVibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
         mWm = IWindowManager.Stub.asInterface(ServiceManager.getService("window"));
 
         final PackageManager pm = mContext.getPackageManager();
         mHasTelephony = pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
 
-<<<<<<< HEAD
         Tracker.sDistance = mContext.getResources().getDimensionPixelSize(R.dimen.pie_trigger_distance);
     }
 
@@ -475,36 +409,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
     }
 
     public void attachTo(PieLayout container) {
-=======
-        final Resources res = mContext.getResources();
-        Tracker.sDistance = res.getDimensionPixelSize(R.dimen.pie_trigger_distance);
-
-        mBackIcon = res.getDrawable(R.drawable.ic_sysbar_back);
-        mBackAltIcon = res.getDrawable(R.drawable.ic_sysbar_back_ime);
-    }
-
-    public void detachContainer() {
-        if (mPieContainer == null) {
-            return;
-        }
-
-        if (mTelephonyManager != null) {
-            mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
-        }
-
-        mContext.unregisterReceiver(mBroadcastReceiver);
-        mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
-
-        mPieContainer.clearSlices();
-        mPieContainer = null;
-    }
-
-    public void attachStatusBar(BaseStatusBar statusBar) {
-        mStatusBar = statusBar;
-    }
-
-    public void attachContainer(PieLayout container) {
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
         mPieContainer = container;
         mPieContainer.clearSlices();
 
@@ -535,25 +439,17 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
         // start listening for changes
         mSettingsObserver.observe();
 
-<<<<<<< HEAD
         mContext.registerReceiver(mBroadcastReceiver,
                 new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-=======
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_BATTERY_CHANGED);
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         mContext.registerReceiver(mBroadcastReceiver, filter);
 
-<<<<<<< HEAD
         if (mHasTelephony) {
             TelephonyManager telephonyManager =
                     (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
             telephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_SERVICE_STATE);
-=======
-        if (mTelephonyManager != null) {
-            mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_SERVICE_STATE);
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
         }
     }
 
@@ -674,7 +570,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
         return 0;
     }
 
-<<<<<<< HEAD
     private Drawable getPieSystemIconImage(String uri) {
         if (uri == null)
             return mContext.getResources().getDrawable(R.drawable.ic_sysbar_null);
@@ -720,8 +615,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
         }
     }
 
-=======
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
     public void activateFromTrigger(View view, MotionEvent event, Position position) {
         if (mPieContainer != null && !isShowing()) {
             doHapticTriggerFeedback();
@@ -836,11 +729,7 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
         }
 
         int triggerSlots = Settings.System.getInt(mContext.getContentResolver(),
-<<<<<<< HEAD
                 Settings.System.PIE_GRAVITY, Position.LEFT.FLAG);
-=======
-                Settings.System.PIE_POSITIONS, Position.BOTTOM.FLAG);
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
 
         triggerSlots = triggerSlots & ~mPosition.FLAG | position.FLAG;
 
@@ -941,13 +830,6 @@ public class PieController implements BaseStatusBar.NavigationBarCallback,
         return mPieContainer != null && mPieContainer.isShowing();
     }
 
-<<<<<<< HEAD
-=======
-    public boolean isSearchLightEnabled() {
-        return mSearchLight != null && (mSearchLight.flags & PieDrawable.VISIBLE) != 0;
-    }
-
->>>>>>> parent of d4bb3bc... Pie controls: A new way of activation
     public String getOperatorState() {
         if (!mHasTelephony) {
             return null;

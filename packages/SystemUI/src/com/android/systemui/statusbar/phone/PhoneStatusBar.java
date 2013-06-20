@@ -2971,17 +2971,6 @@ public class PhoneStatusBar extends BaseStatusBar {
         }
 
         @Override
-        public void onChange(boolean selfChange) {
-            boolean hideSettingsPanel = Settings.System.getInt(mContext.getContentResolver(),
-                                    Settings.System.QS_DISABLE_PANEL, 0) == 1;
-
-            if (hideSettingsPanel != mHideSettingsPanel) {
-                recreateStatusBar();
-            }
-        }
-
-
-        @Override
         public void onChange(boolean selfChange, Uri uri) {
             if (mSettingsContainer != null) {
                 mQS.setupQuickSettings();

@@ -288,14 +288,8 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     private boolean mDeviceProvisioned = false;
 
-    private boolean mShowNotificationCounts;
-
     public Ticker getTicker() {
         return mTicker;
-    }
-
-    public IStatusBarService getService() {
-        return mBarService;
     }
 
     public NotificationData getNotificationData() {
@@ -369,9 +363,6 @@ public abstract class BaseStatusBar extends SystemUI implements
 
         mBarService = IStatusBarService.Stub.asInterface(
                 ServiceManager.getService(Context.STATUS_BAR_SERVICE));
-
-        mShowNotificationCounts = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_NOTIF_COUNT, 0) == 1;
 
         mStatusBarContainer = new FrameLayout(mContext);
 
@@ -555,7 +546,7 @@ public abstract class BaseStatusBar extends SystemUI implements
     }
 
     public void userSwitched(int newUserId) {
-        // should be overridden
+        StatusBarIconView.GlobalSettingsObserver.getInstance(mContext).onChange(true);
     }
 
     public boolean notificationIsForCurrentUser(StatusBarNotification n) {
@@ -1578,7 +1569,6 @@ public abstract class BaseStatusBar extends SystemUI implements
             		android.os.Process.killProcess(android.os.Process.myPid());
 		}
 	    }
-
         }
     }
 

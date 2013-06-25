@@ -171,8 +171,6 @@ public class TabletStatusBar extends BaseStatusBar implements
 
     NotificationIconArea.IconLayout mIconLayout;
 
-    TabletTicker mTicker;
-
     View mFakeSpaceBar;
     KeyEvent mSpaceBarKeyEvent = null;
 
@@ -265,6 +263,13 @@ public class TabletStatusBar extends BaseStatusBar implements
         mNotificationPanel.setOnTouchListener(
                 new TouchOutsideListener(MSG_CLOSE_NOTIFICATION_PANEL, mNotificationPanel));
 
+        View panelFloat = mNotificationPanel.findViewById(R.id.system_bar_notification_panel_bottom_space);
+        if (panelFloat != null) {
+            ViewGroup.LayoutParams lp = panelFloat.getLayoutParams();
+            lp.height = getStatusBarHeight() * 7 / 6;
+            panelFloat.setLayoutParams(lp);
+        }
+
         // the battery icon
         mBatteryController.addIconView((ImageView)mNotificationPanel.findViewById(R.id.battery));
         mBatteryController.addLabelView(
@@ -295,6 +300,13 @@ public class TabletStatusBar extends BaseStatusBar implements
                 (TextView)mNotificationPanel.findViewById(R.id.mobile_text));
         mNetworkController.addCombinedLabelView(
                 (TextView)mBarContents.findViewById(R.id.network_text));
+
+        mHaloButton = (ImageView) mNotificationPanel.findViewById(R.id.halo_button);
+        if (mHaloButton != null) {
+            mHaloButton.setOnClickListener(mHaloButtonListener);
+            mHaloButtonVisible = true;
+            updateHaloButton();
+        }
 
         mStatusBarView.setIgnoreChildren(0, mNotificationTrigger, mNotificationPanel);
 
@@ -382,6 +394,17 @@ public class TabletStatusBar extends BaseStatusBar implements
         mStorageManager.registerListener(
                 new com.android.systemui.usb.StorageNotification(context));
     }
+
+    private View.OnClickListener mHaloButtonListener = new View.OnClickListener() {
+        public void onClick(View v) {
+            // Activate HALO
+            Settings.System.putIntForUser(mContext.getContentResolver(),
+                    Settings.System.HALO_ACTIVE, 1, UserHandle.USER_CURRENT);
+            // Collapse
+            animateCollapsePanels();
+        }
+    };
+
 
     @Override
     protected int getExpandedViewMaxHeight() {
@@ -547,7 +570,7 @@ public class TabletStatusBar extends BaseStatusBar implements
         mNotificationPeekTapDuration = ViewConfiguration.getTapTimeout();
         mNotificationFlingVelocity = 300; // px/s
 
-        mTicker = new TabletTicker(this);
+        mTabletTicker = new TabletTicker(this);
 
         // The icons
         mLocationController = new LocationController(mContext); // will post a notification
@@ -866,7 +889,7 @@ public class TabletStatusBar extends BaseStatusBar implements
                     if (!mNotificationPanel.isShowing()) {
                         mNotificationPanel.show(true, true);
                         mNotificationArea.setVisibility(View.INVISIBLE);
-                        mTicker.halt();
+                        mTabletTicker.halt();
                     }
                     break;
                 case MSG_CLOSE_NOTIFICATION_PANEL:
@@ -909,7 +932,7 @@ public class TabletStatusBar extends BaseStatusBar implements
                     notifyUiVisibilityChanged();
                     break;
                 case MSG_STOP_TICKER:
-                    mTicker.halt();
+                    mTabletTicker.halt();
                     break;
             }
         }
@@ -953,7 +976,7 @@ public class TabletStatusBar extends BaseStatusBar implements
     public void removeNotification(IBinder key) {
         if (DEBUG) Slog.d(TAG, "removeNotification(" + key + ")");
         removeNotificationViews(key);
-        mTicker.remove(key);
+        mTabletTicker.remove(key);
         setAreThereNotifications();
     }
 
@@ -1000,7 +1023,7 @@ public class TabletStatusBar extends BaseStatusBar implements
 
             if ((state & StatusBarManager.DISABLE_NOTIFICATION_ICONS) != 0) {
                 Slog.i(TAG, "DISABLE_NOTIFICATION_ICONS: yes" + (mNotificationDNDMode?" (DND)":""));
-                mTicker.halt();
+                mTabletTicker.halt();
             } else {
                 Slog.i(TAG, "DISABLE_NOTIFICATION_ICONS: no" + (mNotificationDNDMode?" (DND)":""));
             }
@@ -1009,7 +1032,7 @@ public class TabletStatusBar extends BaseStatusBar implements
             reloadAllNotificationIcons();
         } else if ((diff & StatusBarManager.DISABLE_NOTIFICATION_TICKER) != 0) {
             if ((state & StatusBarManager.DISABLE_NOTIFICATION_TICKER) != 0) {
-                mTicker.halt();
+                mTabletTicker.halt();
             }
         }
         if ((diff & (StatusBarManager.DISABLE_RECENT
@@ -1052,6 +1075,7 @@ public class TabletStatusBar extends BaseStatusBar implements
 
     @Override
     protected void tick(IBinder key, StatusBarNotification n, boolean firstTime) {
+        mTabletTicker.setDisabled(mHaloActive);
         // Don't show the ticker when the windowshade is open.
         if (mNotificationPanel.isShowing()) {
             return;
@@ -1068,14 +1092,15 @@ public class TabletStatusBar extends BaseStatusBar implements
         if (hasTicker(n.notification) && mStatusBarView.getWindowToken() != null) {
             if (0 == (mDisabled & (StatusBarManager.DISABLE_NOTIFICATION_ICONS
                             | StatusBarManager.DISABLE_NOTIFICATION_TICKER))) {
-                mTicker.add(key, n);
-                mFeedbackIconArea.setVisibility(View.GONE);
+                mTabletTicker.add(key, n);
+                if (!mHaloActive) mFeedbackIconArea.setVisibility(View.GONE);
             }
         }
     }
 
     // called by TabletTicker when it's done with all queued ticks
     public void doneTicking() {
+        if (mHaloActive) return;
         mFeedbackIconArea.setVisibility(View.VISIBLE);
     }
 
@@ -1492,8 +1517,9 @@ public class TabletStatusBar extends BaseStatusBar implements
         // The IME switcher and compatibility mode icons take the place of notifications. You didn't
         // need to see all those new emails, did you?
         int maxNotificationIconsCount = mMaxNotificationIcons;
-        if (mInputMethodSwitchButton.getVisibility() != View.GONE) maxNotificationIconsCount --;
-        if (mCompatModeButton.getVisibility()        != View.GONE) maxNotificationIconsCount --;
+        if (maxNotificationIconsCount > 0) {
+            if (mInputMethodSwitchButton.getVisibility() != View.GONE) maxNotificationIconsCount --;
+            if (mCompatModeButton.getVisibility()        != View.GONE) maxNotificationIconsCount --;
 
         final boolean provisioned = isDeviceProvisioned();
         // If the device hasn't been through Setup, we only show system notifications
@@ -1501,7 +1527,7 @@ public class TabletStatusBar extends BaseStatusBar implements
             if (i >= N) break;
             Entry ent = mNotificationData.get(N-i-1);
             if ((provisioned && ent.notification.score >= HIDE_ICONS_BELOW_SCORE)
-                    || showNotificationEvenIfUnprovisioned(ent.notification)) {
+                    || showNotificationEvenIfUnprovisioned(ent.notification) || mHaloTaskerActive) {
                 toShow.add(ent.icon);
             }
         }
@@ -1618,7 +1644,7 @@ public class TabletStatusBar extends BaseStatusBar implements
 
     @Override
     protected void haltTicker() {
-        mTicker.halt();
+        mTabletTicker.halt();
     }
 
     @Override

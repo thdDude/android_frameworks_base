@@ -100,7 +100,6 @@ import com.android.systemui.statusbar.StatusBarIconView;
 import com.android.systemui.statusbar.policy.BatteryController;
 import com.android.systemui.statusbar.policy.CircleBattery;
 import com.android.systemui.statusbar.policy.CircleDockBattery;
-import com.android.systemui.statusbar.policy.Clock;
 import com.android.systemui.statusbar.policy.DockBatteryController;
 import com.android.systemui.statusbar.policy.BluetoothController;
 import com.android.systemui.statusbar.policy.DateView;
@@ -242,7 +241,6 @@ public class PhoneStatusBar extends BaseStatusBar {
     private SignalClusterTextView mSignalTextView;
     private CircleBattery mCircleBattery;
     private CircleDockBattery mCircleDockBattery;
-    private Clock mClock;
 
     private boolean mShowCarrierInPanel = false;
 
@@ -683,7 +681,6 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         mSignalView = (SignalClusterView) mStatusBarView.findViewById(R.id.signal_cluster);
         mSignalTextView = (SignalClusterTextView) mStatusBarView.findViewById(R.id.signal_cluster_text);
-        mClock = (Clock) mStatusBarView.findViewById(R.id.clock);
 
         mNetworkController.addSignalCluster(mSignalView);
         mSignalView.setNetworkController(mNetworkController);
@@ -2759,9 +2756,6 @@ public class PhoneStatusBar extends BaseStatusBar {
         }
         if (mCircleDockBattery != null) {
             mCircleDockBattery.updateSettings();
-        }
-        if (mClock != null) {
-            mClock.updateSettings();
         }
         super.userSwitched(newUserId);
     }

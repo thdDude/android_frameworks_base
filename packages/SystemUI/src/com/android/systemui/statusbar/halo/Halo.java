@@ -55,6 +55,7 @@ import android.graphics.PorterDuffColorFilter;
 import android.graphics.Matrix;
 import android.os.Handler;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.os.Vibrator;
 import android.os.ServiceManager;
 import android.provider.Settings;
@@ -240,7 +241,8 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
 
         // Init colors
         mPaintHoloBlue.setAntiAlias(true);
-        mPaintHoloBlue.setColor(0xff33b5e5);
+        mPaintHoloBlue.setColor(Settings.System.getIntForUser(context.getContentResolver(),
+                Settings.System.HALO_PING_COLOR, 0xff33b5e5, UserHandle.USER_CURRENT));
         mPaintWhite.setAntiAlias(true);
         mPaintWhite.setColor(0xfff0f0f0);
         mPaintHoloRed.setAntiAlias(true);

@@ -509,8 +509,6 @@ public abstract class BaseStatusBar extends SystemUI implements
     protected void updateHaloButton() {
         if (!mHaloEnabled) {
             mHaloButtonVisible = false;
-        } else {
-            mHaloButtonVisible = true; 
         }
         if (mHaloButton != null) {
             mHaloButton.setVisibility(mHaloButtonVisible && !mHaloActive ? View.VISIBLE : View.GONE);

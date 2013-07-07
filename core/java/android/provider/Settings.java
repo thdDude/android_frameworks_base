@@ -3048,21 +3048,6 @@ public final class Settings {
         public static final String HALO_HIDE = "halo_hide";
 
         /**
-         * @hide
-         */
-        public static final String HALO_BUTTON_COLOR = "halo_button_color";
-
-        /**
-         * @hide
-         */
-        public static final String HALO_TEXT_BUBBLE_COLOR = "halo_text_bubble_color";
-
-        /**
-         * @hide
-         */
-        public static final String HALO_PING_COLOR = "halo_ping_color";
-
-        /**
          * Display style of the status bar battery information
          * 0: Display the stock battery information
          * 1: Display cm battery percentage implementation / dont show stock icon

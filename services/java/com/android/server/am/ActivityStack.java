@@ -58,6 +58,7 @@ import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.os.UserHandle;
+import android.provider.Settings;
 import android.util.EventLog;
 import android.util.Log;
 import android.util.Slog;

@@ -336,7 +336,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
 
     public void setStatusBar(BaseStatusBar bar) {
         mBar = bar;
-        boolean tabletMode = Settings.System.getIntForUser(
+        /*boolean tabletMode = Settings.System.getIntForUser(
                 mContext.getContentResolver(),
                 Settings.System.TABLET_MODE, mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0,
@@ -345,7 +345,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
             if (mBar.getTabletTicker() != null) {
                 mBar.getTabletTicker().setUpdateEvent(this);
             }
-        } else if (mBar.getTicker() != null) {
+        } else */if (mBar.getTicker() != null) {
             mBar.getTicker().setUpdateEvent(this);
         }
         mNotificationData = mBar.getNotificationData();
@@ -700,7 +700,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
         mEffect.unscheduleSleep();
         mHandler.removeCallbacksAndMessages(null);
         // Kill callback
-        boolean tabletMode = Settings.System.getIntForUser(
+        /*boolean tabletMode = Settings.System.getIntForUser(
                 mContext.getContentResolver(),
                 Settings.System.TABLET_MODE, mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0,
@@ -709,7 +709,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
             if (mBar.getTabletTicker() != null) {
                 mBar.getTabletTicker().setUpdateEvent(null);
             }
-        } else if (mBar.getTicker() != null) {
+        } else */if (mBar.getTicker() != null) {
             mBar.getTicker().setUpdateEvent(null);
         }
         // Flag tasker

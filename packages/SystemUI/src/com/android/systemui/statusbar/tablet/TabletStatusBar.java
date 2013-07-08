@@ -42,6 +42,7 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.storage.StorageManager;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Pair;
@@ -1517,7 +1518,7 @@ public class TabletStatusBar extends BaseStatusBar implements
         // The IME switcher and compatibility mode icons take the place of notifications. You didn't
         // need to see all those new emails, did you?
         int maxNotificationIconsCount = mMaxNotificationIcons;
-        if (maxNotificationIconsCount > 0) {
+        //if (maxNotificationIconsCount > 0) {
             if (mInputMethodSwitchButton.getVisibility() != View.GONE) maxNotificationIconsCount --;
             if (mCompatModeButton.getVisibility()        != View.GONE) maxNotificationIconsCount --;
 

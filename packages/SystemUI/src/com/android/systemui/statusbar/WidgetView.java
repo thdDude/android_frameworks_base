@@ -275,10 +275,6 @@ public class WidgetView extends LinearLayout {
                 Settings.System.getUriFor(Settings.System.NAVIGATION_BAR_WIDGETS_ALPHA),
                 false,
                 this);
-            resolver.registerContentObserver(
-                Settings.Secure.getUriFor(Settings.Secure.UI_MODE_IS_TOGGLED),
-                false,
-                this);
             createWidgetView();
         }
 

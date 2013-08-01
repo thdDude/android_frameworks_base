@@ -2004,6 +2004,49 @@ public final class Settings {
         public static final String PHONE_BLACKLIST_ENABLED = "phone_blacklist_enabled";
 
         /**
+         * Whether a notification should be shown when a call/message is blocked
+         * @hide
+         */
+        public static final String PHONE_BLACKLIST_NOTIFY_ENABLED = "phone_blacklist_notify_enabled";
+
+        /**
+         * Whether the blacklisting feature for phone calls from private numbers is enabled
+         * @hide
+         */
+        public static final String PHONE_BLACKLIST_PRIVATE_NUMBER_MODE = "phone_blacklist_private_number_enabled";
+
+        /**
+         * Whether the blacklisting feature for phone calls from private numbers is enabled
+         * @hide
+         */
+        public static final String PHONE_BLACKLIST_UNKNOWN_NUMBER_MODE = "phone_blacklist_private_number_enabled";
+
+        /**
+         * Constants to be used for {@link PHONE_BLACKLIST_PRIVATE_NUMBER_MODE} and
+         * {@link PHONE_BLACKLIST_UNKNOWN_NUMBER_MODE}.
+         * @hide
+         */
+        public static final int BLACKLIST_DO_NOT_BLOCK = 0;
+        /**
+         * @hide
+         */
+        public static final int BLACKLIST_BLOCK = 1;
+        /**
+         * @hide
+         */
+        public static final int BLACKLIST_PHONE_SHIFT = 0;
+        /**
+         * @hide
+         */
+        public static final int BLACKLIST_MESSAGE_SHIFT = 4;
+
+        /**
+         * Whether the regex blacklisting feature for phone calls is enabled
+         * @hide
+         */
+        public static final String PHONE_BLACKLIST_REGEX_ENABLED = "phone_blacklist_regex_enabled";
+
+        /**
          * Whether the phone ringtone should be played in an increasing manner
          * @hide
          */
@@ -2503,6 +2546,13 @@ public final class Settings {
          * @hide
          */
         public static final String LOCKSCREEN_TARGETS = "lockscreen_targets";
+
+        /**
+        * Whether music controls should be shown on the lockscreen if a supporting
+        * music player is active.
+        * @hide
+        */
+        public static final String LOCKSCREEN_MUSIC_CONTROLS = "lockscreen_music_controls";
 
         /**
          * @deprecated Use {@link android.provider.Settings.Global#LOW_BATTERY_SOUND}
@@ -3201,6 +3251,19 @@ public final class Settings {
          * @hide
          */
         public static final String STATUS_BAR_IME_SWITCHER = "status_bar_ime_switcher";
+
+        /**
+         * Whether to collapse the notification area after dismissing the last notification
+         * @hide
+         */
+        public static final String STATUS_BAR_COLLAPSE_ON_DISMISS = "status_bar_collapse_on_dismiss";
+
+        /** @hide */
+        public static final int STATUS_BAR_COLLAPSE_NEVER = 0;
+        /** @hide */
+        public static final int STATUS_BAR_COLLAPSE_IF_EMPTIED = 1;
+        /** @hide */
+        public static final int STATUS_BAR_COLLAPSE_IF_NO_CLEARABLE = 2;
 
          /**
          * Expanded desktop on/off state
@@ -4066,6 +4129,11 @@ public final class Settings {
             POWER_MENU_USER_ENABLED,
             LOCKSCREEN_VIBRATE_ENABLED,
             LOCKSCREEN_ALWAYS_SHOW_BATTERY,
+            PHONE_BLACKLIST_ENABLED,
+            PHONE_BLACKLIST_NOTIFY_ENABLED,
+            PHONE_BLACKLIST_PRIVATE_NUMBER_MODE,
+            PHONE_BLACKLIST_UNKNOWN_NUMBER_MODE,
+            PHONE_BLACKLIST_REGEX_ENABLED,
         };
 
         // Settings moved to Settings.Secure

@@ -29,9 +29,13 @@ import com.android.systemui.SystemUI;
 import com.android.systemui.recent.RecentTasksLoader;
 import com.android.systemui.recent.RecentsActivity;
 import com.android.systemui.recent.TaskDescription;
+import com.android.systemui.statusbar.pie.PieLayout;
+import com.android.systemui.statusbar.AppSidebar;
 import com.android.systemui.statusbar.policy.NotificationRowLayout;
 import com.android.systemui.statusbar.policy.PieController;
+import com.android.systemui.statusbar.policy.PieController.Position;
 import com.android.systemui.statusbar.tablet.StatusBarPanel;
+import com.android.systemui.statusbar.WidgetView;
 
 import android.app.ActivityManager;
 import android.app.ActivityManagerNative;
@@ -41,16 +45,29 @@ import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.TransitionDrawable;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuff.Mode;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
@@ -59,14 +76,15 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.provider.Settings;
-import android.service.pie.PieManager;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Slog;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.IWindowManager;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -83,6 +101,10 @@ import android.widget.PopupMenu;
 import android.widget.RemoteViews;
 import android.widget.TextView;
 
+import com.android.systemui.statusbar.halo.Halo;
+import com.android.systemui.statusbar.phone.Ticker;
+import com.android.systemui.statusbar.tablet.TabletTicker;
+
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -90,6 +112,7 @@ public abstract class BaseStatusBar extends SystemUI implements
         CommandQueue.Callbacks {
     public static final String TAG = "StatusBar";
     public static final boolean DEBUG = false;
+    public static final boolean DEBUG_INPUT = false;
     public static final boolean MULTIUSER_DEBUG = false;
 
     protected static final int MSG_TOGGLE_RECENTS_PANEL = 1020;
@@ -100,8 +123,19 @@ public abstract class BaseStatusBar extends SystemUI implements
     protected static final int MSG_CLOSE_SEARCH_PANEL = 1025;
     protected static final int MSG_SHOW_INTRUDER = 1026;
     protected static final int MSG_HIDE_INTRUDER = 1027;
+    protected static final int MSG_TOGGLE_WIDGETS = 1028;
 
     protected static final boolean ENABLE_INTRUDERS = false;
+
+    private boolean mPieShowTrigger = false;
+    private boolean mDisableTriggers = false;
+    private float mPieTriggerThickness;
+    private float mPieTriggerHeight;
+    private int mPieTriggerGravityLeftRight;
+
+    private boolean mPieImeIsShowing = false;
+
+    private WidgetView mWidgetView;
 
     // Should match the value in PhoneWindowManager
     public static final String SYSTEM_DIALOG_REASON_RECENT_APPS = "recentapps";
@@ -131,6 +165,16 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     protected FrameLayout mStatusBarContainer;
 
+    // Halo
+    protected Halo mHalo = null;
+    protected Ticker mTicker;
+    protected TabletTicker mTabletTicker;
+    protected boolean mHaloEnabled;
+    protected boolean mHaloActive;
+    protected boolean mHaloTaskerActive = false;
+    protected ImageView mHaloButton;
+    protected boolean mHaloButtonVisible = true;
+
     /**
      * An interface for navigation key bars to allow status bars to signal which keys are
      * currently of interest to the user.<br>
@@ -159,6 +203,85 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     // Pie Control
     protected PieController mPieController;
+    protected PieLayout mPieContainer;
+    private int mPieTriggerSlots;
+    public int mPieTriggerMask = Position.LEFT.FLAG
+            | Position.BOTTOM.FLAG
+            | Position.RIGHT.FLAG
+            | Position.TOP.FLAG;
+    private boolean mForceDisableBottomAndTopTrigger = false;
+    private View[] mPieTrigger = new View[Position.values().length];
+    private PieSettingsObserver mSettingsObserver;
+
+    private View.OnTouchListener mPieTriggerOnTouchHandler = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            final int action = event.getAction();
+            final PieController.Tracker tracker = (PieController.Tracker)v.getTag();
+
+            if (tracker == null) {
+                if (DEBUG_INPUT) {
+                    Slog.v(TAG, "Pie trigger onTouch: action: " + action + ", ("
+                            + event.getAxisValue(MotionEvent.AXIS_X) + ","
+                            + event.getAxisValue(MotionEvent.AXIS_Y) + ") position: NULL returning: false");
+                }
+                return false;
+            }
+
+            if (!mPieController.isShowing()) {
+                if (event.getPointerCount() > 1) {
+                    if (DEBUG_INPUT) {
+                        Slog.v(TAG, "Pie trigger onTouch: action: " + action
+                                + ", (to many pointers) position: " + tracker.position.name()
+                                + " returning: false");
+                    }
+                    return false;
+                }
+
+                switch (action) {
+                    case MotionEvent.ACTION_DOWN:
+                        tracker.start(event);
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        if (tracker.move(event)) {
+                            if (DEBUG) {
+                                Slog.v(TAG, "Pie control activated on: ("
+                                        + event.getAxisValue(MotionEvent.AXIS_X) + ","
+                                        + event.getAxisValue(MotionEvent.AXIS_Y) + ") with position: "
+                                        + tracker.position.name());
+                            }
+                            // send the activation to the controller
+                            mPieController.activateFromTrigger(v, event, tracker.position);
+                            // forward a spoofed ACTION_DOWN event
+                            MotionEvent echo = event.copy();
+                            echo.setAction(MotionEvent.ACTION_DOWN);
+                            return mPieContainer.onTouch(v, echo);
+                        }
+                        break;
+                    default:
+                        // whatever it was, we are giving up on this one
+                        tracker.active = false;
+                        break;
+                }
+            } else {
+                if (DEBUG_INPUT) {
+                    Slog.v(TAG, "Pie trigger onTouch: action: " + action + ", ("
+                            + event.getAxisValue(MotionEvent.AXIS_X) + ","
+                            + event.getAxisValue(MotionEvent.AXIS_Y)
+                            + ") position: " + tracker.position.name() + " delegating");
+                }
+                return mPieContainer.onTouch(v, event);
+            }
+            if (DEBUG_INPUT) {
+                Slog.v(TAG, "Pie trigger onTouch: action: " + action + ", ("
+                        + event.getAxisValue(MotionEvent.AXIS_X) + ","
+                        + event.getAxisValue(MotionEvent.AXIS_Y) + ") position: "
+                        + tracker.position.name() + " returning: " + tracker.active);
+            }
+            return tracker.active;
+        }
+
+    };
 
     protected int mLayoutDirection;
     private Locale mLocale;
@@ -177,7 +300,30 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     protected Display mDisplay;
 
+    private static boolean mNavBarFirstBootFlag = true;
+
     private boolean mDeviceProvisioned = false;
+
+    private boolean mShowNotificationCounts;
+
+    public Ticker getTicker() {
+        return mTicker;
+    }
+
+    public TabletTicker getTabletTicker() {
+        return mTabletTicker;
+    }
+
+    public IStatusBarService getService() {
+        return mBarService;
+    }
+
+    public NotificationData getNotificationData() {
+        return mNotificationData;
+    }
+
+    protected AppSidebar mAppSidebar;
+    protected int mSidebarPosition;
 
     public IStatusBarService getStatusBarService() {
         return mBarService;
@@ -232,6 +378,9 @@ public abstract class BaseStatusBar extends SystemUI implements
     };
 
     public void start() {
+        SettingsObserver observer = new SettingsObserver(mHandler);
+        observer.observe(mContext);
+
         mWindowManager = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
         mWindowManagerService = WindowManagerGlobal.getWindowManagerService();
         mDisplay = mWindowManager.getDefaultDisplay();
@@ -249,6 +398,23 @@ public abstract class BaseStatusBar extends SystemUI implements
         mLocale = mContext.getResources().getConfiguration().locale;
         mLayoutDirection = TextUtils.getLayoutDirectionFromLocale(mLocale);
 
+	try {
+        mNavBarFirstBootFlag = !mWindowManagerService.hasNavigationBar();
+        } catch (RemoteException e) {
+	// do nothing
+        }
+
+        boolean showNavBar = mContext.getResources().getBoolean(
+                    com.android.internal.R.bool.config_showNavigationBar);
+            // Allow a system property to override this. Used by the emulator.
+            // See also hasNavigationBar().
+            String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
+            if (! "".equals(navBarOverride)) {
+                if      (navBarOverride.equals("1")) showNavBar = false;
+
+                else if (navBarOverride.equals("0")) showNavBar = true;
+            }
+
         // Connect in to the status bar manager service
         StatusBarIconList iconList = new StatusBarIconList();
         ArrayList<IBinder> notificationKeys = new ArrayList<IBinder>();
@@ -264,7 +430,15 @@ public abstract class BaseStatusBar extends SystemUI implements
             // If the system process isn't there we're doomed anyway.
         }
 
+        mHaloActive = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.HALO_ACTIVE, 0, UserHandle.USER_CURRENT) == 1;
+
+        mHaloEnabled = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.HALO_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
+
+
         createAndAddWindows();
+        mWidgetView = new WidgetView(mContext,null);
 
         disable(switches[0]);
         setSystemUiVisibility(switches[1], 0xffffffff);
@@ -306,12 +480,6 @@ public abstract class BaseStatusBar extends SystemUI implements
                    ));
         }
 
-        if (PieManager.getInstance().isPresent()) {
-            mPieController = new PieController(mContext);
-            mPieController.attachStatusBar(this);
-            addNavigationBarCallback(mPieController);
-        }
-
         mCurrentUserId = ActivityManager.getCurrentUser();
 
         IntentFilter filter = new IntentFilter();
@@ -324,14 +492,95 @@ public abstract class BaseStatusBar extends SystemUI implements
                     mCurrentUserId = intent.getIntExtra(Intent.EXTRA_USER_HANDLE, -1);
                     if (true) Slog.v(TAG, "userId " + mCurrentUserId + " is in the house");
                     userSwitched(mCurrentUserId);
-                    if (mPieController != null) {
-                        mPieController.userSwitched(mCurrentUserId);
-                    }
                 }
             }
         }, filter);
 
         mLocale = mContext.getResources().getConfiguration().locale;
+
+        SidebarObserver sobserver = new SidebarObserver(mHandler);
+        sobserver.observe();
+
+        mPieController = new PieController(mContext);
+        mPieController.attachTo(this);
+        addNavigationBarCallback(mPieController);
+
+        mSettingsObserver = new PieSettingsObserver(new Handler());
+
+        // this calls attachPie() implicitly
+        mSettingsObserver.onChange(true);
+
+        mSettingsObserver.observe();
+
+        // Listen for HALO state
+        mContext.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.HALO_ACTIVE), false,
+                new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                updateHalo();
+            }}, UserHandle.USER_ALL);
+
+
+        // Listen for HALO enabled switch
+        mContext.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.HALO_ENABLED), false, new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                updateHalo();
+            }});
+
+        updateHalo();
+    }
+
+    public void setHaloTaskerActive(boolean haloTaskerActive, boolean updateNotificationIcons) {
+        mHaloTaskerActive = haloTaskerActive;
+        if (updateNotificationIcons) {
+            updateNotificationIcons();
+        }
+    }
+
+    protected void updateHaloButton() {
+        if (!mHaloEnabled) {
+            mHaloButtonVisible = false;
+        } else {
+	    mHaloButtonVisible = true;
+        }
+        if (mHaloButton != null) {
+            mHaloButton.setVisibility(mHaloButtonVisible && !mHaloActive ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    protected void updateHalo() {
+        mHaloActive = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.HALO_ACTIVE, 0, UserHandle.USER_CURRENT) == 1;
+
+        mHaloEnabled = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.HALO_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
+
+        updateHaloButton();
+
+        if (!mHaloEnabled) {
+          mHaloActive = false;
+        }
+
+        if (mHaloActive) {
+            if (mHalo == null) {
+                LayoutInflater inflater = (LayoutInflater) mContext
+                        .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                mHalo = (Halo)inflater.inflate(R.layout.halo_trigger, null);
+                mHalo.setLayerType (View.LAYER_TYPE_HARDWARE, null);
+                WindowManager.LayoutParams params = mHalo.getWMParams();
+                mWindowManager.addView(mHalo,params);
+                mHalo.setStatusBar(this);
+            }
+        } else {
+            if (mHalo != null) {
+                mHalo.cleanUp();
+                mWindowManager.removeView(mHalo);
+                mHalo = null;
+            }
+        }
     }
 
     public void userSwitched(int newUserId) {
@@ -461,6 +710,13 @@ public abstract class BaseStatusBar extends SystemUI implements
     }
 
     @Override
+    public void toggleWidgets() {
+        int msg = MSG_TOGGLE_WIDGETS;
+        mHandler.removeMessages(msg);
+        mHandler.sendEmptyMessage(msg);
+    }
+
+    @Override
     public void preloadRecentApps() {
         int msg = MSG_PRELOAD_RECENT_APPS;
         mHandler.removeMessages(msg);
@@ -494,6 +750,18 @@ public abstract class BaseStatusBar extends SystemUI implements
     protected abstract WindowManager.LayoutParams getSearchLayoutParams(
             LayoutParams layoutParams);
 
+    protected void setStatusBarParams(View statusbarView){
+	float opacity = (1-(Settings.System.getFloat(mContext.getContentResolver(),
+	 	Settings.System.STATUS_BAR_TRANSPARENCY, 0.0f)));
+        statusbarView.setBackgroundColor((int) (((float) opacity) * 255) * 0x1000000);
+    }
+
+    protected void setNotificationPanelParams(View notificationpanel){
+	float opacity = (1-(Settings.System.getFloat(mContext.getContentResolver(),
+                Settings.System.NOTIFICATION_PANEL_TRANSPARENCY, 0.0f)));
+        notificationpanel.setBackgroundColor((int) (((float) opacity) * 255) * 0x1000000);
+    }
+
     protected void updateSearchPanel() {
         // Search Panel
         boolean visible = false;
@@ -501,11 +769,15 @@ public abstract class BaseStatusBar extends SystemUI implements
             visible = mSearchPanelView.isShowing();
             mWindowManager.removeView(mSearchPanelView);
         }
-
+        boolean tabletModeOverride = (Settings.System.getInt(
+                        mContext.getContentResolver(),
+                        Settings.System.TABLET_MODE, 0) == 1);
         // Provide SearchPanel with a temporary parent to allow layout params to work.
         LinearLayout tmpRoot = new LinearLayout(mContext);
         mSearchPanelView = (SearchPanelView) LayoutInflater.from(mContext).inflate(
-                 R.layout.status_bar_search_panel, tmpRoot, false);
+                tabletModeOverride ?
+                R.layout.status_bar_search_panel_tablet :
+                R.layout.status_bar_search_panel, tmpRoot, false);
         mSearchPanelView.setOnTouchListener(
                  new TouchOutsideListener(MSG_CLOSE_SEARCH_PANEL, mSearchPanelView));
         mSearchPanelView.setVisibility(View.GONE);
@@ -521,6 +793,16 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     protected H createHandler() {
          return new H();
+    }
+
+    static int screenLayout() {
+        final int screenSize = Resources.getSystem().getConfiguration().screenLayout &
+                Configuration.SCREENLAYOUT_SIZE_MASK;
+        return screenSize;
+    }
+
+    protected boolean isScreenPortrait() {
+        return mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
     }
 
     static void sendCloseSystemWindows(Context context, String reason) {
@@ -729,16 +1011,40 @@ public abstract class BaseStatusBar extends SystemUI implements
              case MSG_CANCEL_PRELOAD_RECENT_APPS:
                   cancelPreloadingRecentTasksList();
                   break;
+             case MSG_TOGGLE_WIDGETS:
+                 if (DEBUG) Slog.d(TAG, "toggle navbar widgets");
+                 Intent toggleWidgets = new Intent(
+                 WidgetView.WidgetReceiver.ACTION_TOGGLE_WIDGETS);
+                 mContext.sendBroadcast(toggleWidgets);
+                 break;
              case MSG_OPEN_SEARCH_PANEL:
                  if (DEBUG) Slog.d(TAG, "opening search panel");
                  if (mSearchPanelView != null) {
                      mSearchPanelView.show(true, true);
+
+                     View bottom = mPieTrigger[Position.BOTTOM.INDEX];
+                     if (bottom != null) {
+                         WindowManager.LayoutParams lp =
+                                 (android.view.WindowManager.LayoutParams) bottom.getLayoutParams();
+                         lp.flags &= ~WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+                         lp.flags |= WindowManager.LayoutParams.FLAG_SLIPPERY;
+                         mWindowManager.updateViewLayout(bottom, lp);
+                     }
                  }
                  break;
              case MSG_CLOSE_SEARCH_PANEL:
                  if (DEBUG) Slog.d(TAG, "closing search panel");
-                 if (mSearchPanelView != null && mSearchPanelView.isShowing()) {
+                 if (mSearchPanelView != null) {
                      mSearchPanelView.show(false, true);
+
+                     View bottom = mPieTrigger[Position.BOTTOM.INDEX];
+                     if (bottom != null) {
+                         WindowManager.LayoutParams lp =
+                                 (android.view.WindowManager.LayoutParams) bottom.getLayoutParams();
+                         lp.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+                         lp.flags &= ~WindowManager.LayoutParams.FLAG_SLIPPERY;
+                         mWindowManager.updateViewLayout(bottom, lp);
+                     }
                  }
                  break;
             }
@@ -866,17 +1172,22 @@ public abstract class BaseStatusBar extends SystemUI implements
         return new NotificationClicker(intent, pkg, tag, id);
     }
 
-    private class NotificationClicker implements View.OnClickListener {
-        private PendingIntent mIntent;
-        private String mPkg;
-        private String mTag;
-        private int mId;
+    public class NotificationClicker implements View.OnClickListener {
+        public PendingIntent mIntent;
+        public String mPkg;
+        public String mTag;
+        public int mId;
+        public boolean mFloat;
 
         NotificationClicker(PendingIntent intent, String pkg, String tag, int id) {
             mIntent = intent;
             mPkg = pkg;
             mTag = tag;
             mId = id;
+        }
+
+        public void makeFloating(boolean floating) {
+            mFloat = floating;
         }
 
         public void onClick(View v) {
@@ -893,9 +1204,17 @@ public abstract class BaseStatusBar extends SystemUI implements
             }
 
             if (mIntent != null) {
+
+                if (mFloat && !"android".equals(mPkg)) {
+                    Intent transparent = new Intent(mContext, com.android.systemui.Transparent.class);
+                    transparent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_FLOATING_WINDOW);
+                    mContext.startActivity(transparent);
+                }
+
                 int[] pos = new int[2];
                 v.getLocationOnScreen(pos);
                 Intent overlay = new Intent();
+                if (mFloat) overlay.addFlags(Intent.FLAG_FLOATING_WINDOW | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 overlay.setSourceBounds(
                         new Rect(pos[0], pos[1], pos[0]+v.getWidth(), pos[1]+v.getHeight()));
                 try {
@@ -904,6 +1223,10 @@ public abstract class BaseStatusBar extends SystemUI implements
                     // the stack trace isn't very helpful here.  Just log the exception message.
                     Slog.w(TAG, "Sending contentIntent failed: " + e);
                 }
+
+                KeyguardManager kgm =
+                    (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
+                if (kgm != null) kgm.exitKeyguardSecurely(null);
             }
 
             try {
@@ -978,6 +1301,41 @@ public abstract class BaseStatusBar extends SystemUI implements
         return entry.notification;
     }
 
+    private Bitmap createRoundIcon(StatusBarNotification notification) {
+        // Construct the round icon
+        BitmapDrawable bd = (BitmapDrawable) mContext.getResources().getDrawable(R.drawable.halo_bg);
+        int iconSize = bd.getBitmap().getWidth();
+        int smallIconSize = mContext.getResources().getDimensionPixelSize(R.dimen.status_bar_icon_size);
+        Bitmap roundIcon = Bitmap.createBitmap(iconSize, iconSize, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(roundIcon);
+        canvas.drawARGB(0, 0, 0, 0);
+
+        if (notification.notification.largeIcon != null) {
+            Paint smoothingPaint = new Paint();
+            smoothingPaint.setAntiAlias(true);
+            smoothingPaint.setFilterBitmap(true);
+            smoothingPaint.setDither(true);
+            canvas.drawCircle(iconSize / 2, iconSize / 2, iconSize / 2.3f, smoothingPaint);
+            smoothingPaint.setXfermode(new PorterDuffXfermode(Mode.SRC_IN));
+            Bitmap scaledBitmap = Bitmap.createScaledBitmap(notification.notification.largeIcon, iconSize, iconSize, true);
+            canvas.drawBitmap(scaledBitmap, null, new Rect(0, 0,
+                    iconSize, iconSize), smoothingPaint);
+        } else {
+            try {
+                Drawable icon = StatusBarIconView.getIcon(mContext,
+                    new StatusBarIcon(notification.pkg, notification.user, notification.notification.icon,
+                    notification.notification.iconLevel, 0, notification.notification.tickerText));
+                if (icon == null) icon = mContext.getPackageManager().getApplicationIcon(notification.pkg);
+                int margin = (iconSize - smallIconSize) / 2;
+                icon.setBounds(margin, margin, iconSize - margin, iconSize - margin);
+                icon.draw(canvas);
+            } catch (Exception e) {
+                // NameNotFoundException
+            }
+        }
+        return roundIcon;
+    }
+
     protected StatusBarIconView addNotificationViews(IBinder key,
             StatusBarNotification notification) {
         if (DEBUG) {
@@ -999,8 +1357,19 @@ public abstract class BaseStatusBar extends SystemUI implements
             handleNotificationError(key, notification, "Couldn't create icon: " + ic);
             return null;
         }
+
+        NotificationData.Entry entry = new NotificationData.Entry(key, notification, iconView,
+                createRoundIcon(notification));
+        entry.hide = entry.notification.pkg.equals("com.paranoid.halo");
+
+        final PendingIntent contentIntent = notification.notification.contentIntent;
+        if (contentIntent != null) {
+            entry.floatingIntent = makeClicker(contentIntent,
+                    notification.pkg, notification.tag, notification.id);
+            entry.floatingIntent.makeFloating(true);
+        }
+
         // Construct the expanded view.
-        NotificationData.Entry entry = new NotificationData.Entry(key, notification, iconView);
         if (!inflateViews(entry, mPile)) {
             handleNotificationError(key, notification, "Couldn't expand RemoteViews for: "
                     + notification);
@@ -1030,6 +1399,7 @@ public abstract class BaseStatusBar extends SystemUI implements
             lp.height = rowHeight;
         }
         entry.row.setLayoutParams(lp);
+        if (entry.hide) entry.row.setVisibility(View.GONE);
         return expand;
     }
 
@@ -1121,7 +1491,8 @@ public abstract class BaseStatusBar extends SystemUI implements
 
         boolean updateTicker = notification.getNotification().tickerText != null
                 && !TextUtils.equals(notification.getNotification().tickerText,
-                        oldEntry.notification.getNotification().tickerText);
+                        oldEntry.notification.getNotification().tickerText) || mHaloActive;
+
         boolean isTopAnyway = isTopNotification(rowParent, oldEntry);
         if (contentsUnchanged && bigContentsUnchanged && (orderUnchanged || isTopAnyway)) {
             if (DEBUG) Slog.d(TAG, "reusing notification for key: " + key);
@@ -1134,13 +1505,21 @@ public abstract class BaseStatusBar extends SystemUI implements
                 }
                 // update the contentIntent
                 final PendingIntent contentIntent = notification.getNotification().contentIntent;
+
                 if (contentIntent != null) {
                     final View.OnClickListener listener = makeClicker(contentIntent,
                             notification.getPackageName(), notification.getTag(), notification.getId());
                     oldEntry.content.setOnClickListener(listener);
+                    oldEntry.floatingIntent = makeClicker(contentIntent,
+                            notification.pkg, notification.tag, notification.id);
+                    oldEntry.floatingIntent.makeFloating(true);
                 } else {
                     oldEntry.content.setOnClickListener(null);
+                    oldEntry.floatingIntent = null;
                 }
+                // Update the roundIcon
+                oldEntry.roundIcon = createRoundIcon(notification);
+
                 // Update the icon.
                 final StatusBarIcon ic = new StatusBarIcon(notification.getPackageName(),
                         notification.getUser(),
@@ -1226,15 +1605,42 @@ public abstract class BaseStatusBar extends SystemUI implements
         return km.inKeyguardRestrictedInputMode();
     }
 
-    public int getExpandedDesktopMode() {
-        ContentResolver resolver = mContext.getContentResolver();
-        boolean expanded = Settings.System.getIntForUser(resolver,
-                Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT) == 1;
-        if (expanded) {
-            return Settings.System.getIntForUser(resolver,
-                    Settings.System.EXPANDED_DESKTOP_STYLE, 0, UserHandle.USER_CURRENT);
+    private static class SettingsObserver extends ContentObserver {
+        private Handler mHandler;
+
+        SettingsObserver(Handler handler) {
+            super(handler);
+            mHandler = handler;
         }
-        return 0;
+
+        void observe(Context context) {
+            ContentResolver resolver = context.getContentResolver();
+
+	resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HIGH_END_GFX_ENABLED), false, this,
+                    UserHandle.USER_ALL);
+        resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAVIGATION_BAR_SHOW), false, this);
+        resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TABLET_MODE), false, this);
+        resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.SETTINGS_TILE_COLOR), false, this);
+
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            if (uri.equals(Settings.System.getUriFor(Settings.System.HIGH_END_GFX_ENABLED)) ||
+		uri.equals(Settings.System.getUriFor(Settings.System.TABLET_MODE))||
+		uri.equals(Settings.System.getUriFor(Settings.System.SETTINGS_TILE_COLOR))) {
+            	android.os.Process.killProcess(android.os.Process.myPid());
+	    }
+            if (uri.equals(Settings.System.getUriFor(Settings.System.NAVIGATION_BAR_SHOW))) {
+		if (mNavBarFirstBootFlag) {
+            		android.os.Process.killProcess(android.os.Process.myPid());
+		}
+	    }
+        }
     }
 
     public void addNavigationBarCallback(NavigationBarCallback callback) {
@@ -1261,9 +1667,335 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     // Pie Controls
 
-    public void updatePieTriggerMask(int newMask) {
-        if (mPieController != null) {
-            mPieController.updatePieTriggerMask(newMask);
+    @Override
+    protected void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        if (DEBUG) Slog.d(TAG, "Configuration changed! Update pie triggers");
+        attachPie();
+    }
+
+    private final class PieSettingsObserver extends ContentObserver {
+        PieSettingsObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            ContentResolver resolver = mContext.getContentResolver();
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PIE_CONTROLS), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PIE_GRAVITY), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PIE_TRIGGER_GRAVITY_LEFT_RIGHT), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PIE_TRIGGER_THICKNESS), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PIE_TRIGGER_HEIGHT), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PIE_TRIGGER_SHOW), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PIE_SOFTKEYBOARD_IS_SHOWING), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.EXPANDED_DESKTOP_STATE), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.EXPANDED_DESKTOP_STYLE), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAVIGATION_BAR_SHOW), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_BUTTON_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_TEXT_BUBBLE_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_PING_COLOR), false, this, UserHandle.USER_ALL);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            mPieTriggerSlots = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.PIE_GRAVITY, Position.LEFT.FLAG);
+            mPieShowTrigger = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.PIE_TRIGGER_SHOW, 0) == 1;
+            mPieTriggerThickness = Settings.System.getFloat(mContext.getContentResolver(),
+                    Settings.System.PIE_TRIGGER_THICKNESS,
+                    mContext.getResources().getDimension(R.dimen.pie_trigger_thickness));
+            mPieTriggerHeight = Settings.System.getFloat(mContext.getContentResolver(),
+                    Settings.System.PIE_TRIGGER_HEIGHT,
+                    0.8f);
+            mPieTriggerGravityLeftRight = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.PIE_TRIGGER_GRAVITY_LEFT_RIGHT,
+                    Gravity.CENTER_VERTICAL);
+            mPieImeIsShowing = Settings.System.getFloat(mContext.getContentResolver(),
+                    Settings.System.PIE_SOFTKEYBOARD_IS_SHOWING, 0) == 1
+                    && Settings.System.getFloat(mContext.getContentResolver(),
+                    Settings.System.PIE_ADJUST_TRIGGER_FOR_IME, 1) == 1;
+            attachPie();
         }
     }
+
+    private boolean isPieEnabled() {
+        boolean expanded = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1;
+        int pie = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.PIE_CONTROLS, 0);
+
+        return (pie == 1 && expanded) || pie == 2;
+    }
+
+    private void attachPie() {
+        if (isPieEnabled()) {
+            setupTriggers(false);
+            // Create our container, if it does not exist already
+            if (mPieContainer == null) {
+                mPieContainer = new PieLayout(mContext);
+                WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL,
+                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                        | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                        | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                        | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                        PixelFormat.TRANSLUCENT);
+                // This title is for debugging only. See: dumpsys window
+                lp.setTitle("PieControlPanel");
+                lp.windowAnimations = android.R.style.Animation;
+                lp.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_BEHIND;
+
+                mWindowManager.addView(mPieContainer, lp);
+                if (mPieController != null) {
+                    mPieController.attachTo(mPieContainer);
+                }
+            }
+
+            // add or update pie triggers
+            if (DEBUG) {
+                Slog.d(TAG, "AttachPie with trigger position flags: "
+                        + mPieTriggerSlots + " masked: " + (mPieTriggerSlots & mPieTriggerMask));
+            }
+
+            refreshPieTriggers();
+
+        } else {
+            for (int i = 0; i < mPieTrigger.length; i++) {
+                if (mPieTrigger[i] != null) {
+                    mWindowManager.removeView(mPieTrigger[i]);
+                    mPieTrigger[i] = null;
+                }
+            }
+        }
+    }
+
+    public void disableTriggers( boolean disableTriggers) {
+        mDisableTriggers = disableTriggers;
+        setupTriggers(false);
+    }
+
+    public void setupTriggers(boolean forceDisableBottomAndTopTrigger) {
+            if (mDisableTriggers) {
+                updatePieTriggerMask(0);
+                return;
+            }
+            mForceDisableBottomAndTopTrigger = forceDisableBottomAndTopTrigger;
+            int expandedMode = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STYLE, 0);
+            boolean expanded = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1;
+            final int showByDefault = mContext.getResources().getBoolean(
+                    com.android.internal.R.bool.config_showNavigationBar) ? 1 : 0;
+            boolean hasNavigationBar = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.NAVIGATION_BAR_SHOW, showByDefault) == 1;
+
+            if ((!expanded && hasNavigationBar)
+                || mForceDisableBottomAndTopTrigger) {
+                    updatePieTriggerMask(Position.LEFT.FLAG
+                                    | Position.RIGHT.FLAG);
+            } else if ((!expanded && !hasNavigationBar)
+                || (expandedMode == 1 && expanded && hasNavigationBar)) {
+                if (!mPieImeIsShowing) {
+                        updatePieTriggerMask(Position.LEFT.FLAG
+                                        | Position.BOTTOM.FLAG
+                                        | Position.RIGHT.FLAG);
+		} else {
+                        updatePieTriggerMask(Position.LEFT.FLAG
+                                        | Position.RIGHT.FLAG);
+                }
+            } else if (expandedMode == 2 && expanded && hasNavigationBar) {
+                    updatePieTriggerMask(Position.LEFT.FLAG
+                                    | Position.RIGHT.FLAG
+                                    | Position.TOP.FLAG);
+            } else {
+                if (!mPieImeIsShowing) {
+                    updatePieTriggerMask(Position.LEFT.FLAG
+                                    | Position.BOTTOM.FLAG
+                                    | Position.RIGHT.FLAG
+                                    | Position.TOP.FLAG);
+                } else {
+                    updatePieTriggerMask(Position.LEFT.FLAG
+                                    | Position.RIGHT.FLAG
+                                    | Position.TOP.FLAG);
+                }
+            }
+    }
+
+    private void updatePieTriggerMask(int newMask) {
+        int oldState = mPieTriggerSlots & mPieTriggerMask;
+        mPieTriggerMask = newMask;
+
+        Settings.System.putInt(mContext.getContentResolver(),
+                Settings.System.PIE_TRIGGER_MASK, mPieTriggerMask);
+
+        // first we check, if it would make a change
+        if ((mPieTriggerSlots & mPieTriggerMask) != oldState
+                || mForceDisableBottomAndTopTrigger) {
+            if (isPieEnabled()) {
+                refreshPieTriggers();
+            }
+        }
+    }
+
+    // This should only be called, when is is clear that the pie controls are active
+    private void refreshPieTriggers() {
+        for (Position g : Position.values()) {
+            View trigger = mPieTrigger[g.INDEX];
+            if (trigger == null && (mPieTriggerSlots & mPieTriggerMask & g.FLAG) != 0) {
+                trigger = new View(mContext);
+                trigger.setClickable(false);
+                trigger.setLongClickable(false);
+                trigger.setTag(mPieController.buildTracker(g));
+                trigger.setOnTouchListener(mPieTriggerOnTouchHandler);
+
+                if (DEBUG) {
+                    Slog.d(TAG, "addPieTrigger on " + g.INDEX
+                            + " with position: " + g + " : " + trigger.toString());
+                }
+                showTrigger(trigger, DEBUG || mPieShowTrigger);
+                mWindowManager.addView(trigger, getPieTriggerLayoutParams(g));
+                mPieTrigger[g.INDEX] = trigger;
+            } else if (trigger != null && (mPieTriggerSlots & mPieTriggerMask & g.FLAG) == 0) {
+                mWindowManager.removeView(trigger);
+                mPieTrigger[g.INDEX] = null;
+            } else if (trigger != null) {
+                showTrigger(trigger, DEBUG || mPieShowTrigger);
+                mWindowManager.updateViewLayout(trigger, getPieTriggerLayoutParams(g));
+            }
+        }
+    }
+
+    private void showTrigger(View trigger, boolean show) {
+        if (show) {
+            trigger.setVisibility(View.VISIBLE);
+            trigger.setBackgroundColor(0x77ff0000);
+        } else {
+            trigger.setBackgroundColor(0x00000000);
+        }
+    }
+
+    private WindowManager.LayoutParams getPieTriggerLayoutParams(Position position) {
+        final Resources res = mContext.getResources();
+
+        float pieTriggerHeight = mPieTriggerHeight;
+        final float pieImePortraitMinHeight = 0.52f;
+        final float pieImeLandscapeMinHeight = 0.32f;
+        if (mPieImeIsShowing && isScreenPortrait()
+                && !mForceDisableBottomAndTopTrigger
+                && pieTriggerHeight > pieImePortraitMinHeight) {
+            pieTriggerHeight = pieImePortraitMinHeight;
+        } else if (mPieImeIsShowing && !isScreenPortrait()
+                && !mForceDisableBottomAndTopTrigger
+                && pieTriggerHeight > pieImeLandscapeMinHeight) {
+            pieTriggerHeight = pieImeLandscapeMinHeight;
+        }
+
+        int width = (int) (res.getDisplayMetrics().widthPixels * 0.9f);
+        int height = (int) (res.getDisplayMetrics().heightPixels * pieTriggerHeight);
+        int triggerThickness = (int) ((mPieTriggerThickness * res.getDisplayMetrics().density) + 0.5);
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                (position == Position.TOP || position == Position.BOTTOM
+                        ? width : triggerThickness),
+                (position == Position.LEFT || position == Position.RIGHT
+                        ? height : triggerThickness),
+                WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                        | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
+                PixelFormat.TRANSLUCENT);
+        // This title is for debugging only. See: dumpsys window
+        lp.setTitle("PieTrigger" + position.name());
+        if (position == Position.LEFT || position == Position.RIGHT) {
+            lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED
+                    | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
+        } else {
+            lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED
+                    | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING;
+        }
+        if (mPieImeIsShowing && !mForceDisableBottomAndTopTrigger
+                    && (position == Position.LEFT || position == Position.RIGHT)) {
+            lp.gravity = position.ANDROID_GRAVITY | Gravity.TOP;
+        } else if (position == Position.LEFT || position == Position.RIGHT) {
+            lp.gravity = position.ANDROID_GRAVITY | mPieTriggerGravityLeftRight;
+        } else {
+            lp.gravity = position.ANDROID_GRAVITY;
+        }
+        return lp;
+    }
+
+    class SidebarObserver extends ContentObserver {
+        SidebarObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            ContentResolver resolver = mContext.getContentResolver();
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.APP_SIDEBAR_POSITION), false, this);
+            update();
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            update();
+        }
+
+        public void update() {
+            ContentResolver resolver = mContext.getContentResolver();
+            int sidebarPosition = Settings.System.getInt(
+                    resolver, Settings.System.APP_SIDEBAR_POSITION, AppSidebar.SIDEBAR_POSITION_LEFT);
+            if (sidebarPosition != mSidebarPosition) {
+                mSidebarPosition = sidebarPosition;
+                mWindowManager.updateViewLayout(mAppSidebar, getAppSidebarLayoutParams(sidebarPosition));
+            }
+        }
+    }
+
+    protected void addSidebarView() {
+        mAppSidebar = (AppSidebar)View.inflate(mContext, R.layout.app_sidebar, null);
+        mWindowManager.addView(mAppSidebar, getAppSidebarLayoutParams(mSidebarPosition));
+    }
+
+    protected void removeSidebarView() {
+        if (mAppSidebar != null)
+            mWindowManager.removeView(mAppSidebar);
+    }
+
+    protected WindowManager.LayoutParams getAppSidebarLayoutParams(int position) {
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_STATUS_BAR_SUB_PANEL,
+                0
+                | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
+                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
+                | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
+                PixelFormat.TRANSLUCENT);
+        lp.gravity = Gravity.TOP;// | Gravity.FILL_VERTICAL;
+        lp.gravity |= position == AppSidebar.SIDEBAR_POSITION_LEFT ? Gravity.LEFT : Gravity.RIGHT;
+        lp.setTitle("AppSidebar");
+
+        return lp;
+    }
+
 }

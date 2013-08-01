@@ -1,21 +1,24 @@
 /*
- * Copyright (C) 2013 The CyanogenMod Project (Jens Doll)
- * This code is loosely based on portions of the ParanoidAndroid Project source, Copyright (C) 2012.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
+* Copyright (C) 2013 The CyanogenMod Project (Jens Doll)
+* This code is loosely based on portions of the ParanoidAndroid Project source, Copyright (C) 2012.
+*
+* Licensed under the Apache License, Version 2.0 (the "License"); you may not
+* use this file except in compliance with the License. You may obtain a copy of
+* the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+* License for the specific language governing permissions and limitations under
+* the License.
+*/
 package com.android.systemui.statusbar.policy;
 
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ActivityOptions;
 import android.app.SearchManager;
 import android.app.StatusBarManager;
@@ -23,138 +26,238 @@ import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
+import android.content.ServiceConnection;
 import android.database.ContentObserver;
-import android.graphics.PixelFormat;
 import android.graphics.Point;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.PorterDuff.Mode;
 import android.hardware.input.InputManager;
+import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Handler;
-import android.os.Looper;
+import android.os.IBinder;
 import android.os.Message;
+import android.os.Messenger;
+import android.os.PowerManager;
+import android.os.Process;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.Vibrator;
 import android.provider.Settings;
-import android.service.pie.PieManager;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.util.Slog;
 import android.view.HapticFeedbackConstants;
 import android.view.IWindowManager;
 import android.view.InputDevice;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.SoundEffectConstants;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.android.internal.util.cm.DevUtils;
-import com.android.internal.util.pie.PiePosition;
-import com.android.internal.util.pie.PieServiceConstants;
+import java.io.File;
+import java.io.FileDescriptor;
+import java.io.PrintWriter;
+import java.net.URISyntaxException;
+import java.util.List;
+
+import com.android.internal.statusbar.IStatusBarService;
 import com.android.systemui.R;
 import com.android.systemui.statusbar.BaseStatusBar;
-import com.android.systemui.statusbar.NavigationButtons;
-import com.android.systemui.statusbar.NavigationButtons.ButtonInfo;
 import com.android.systemui.statusbar.pie.PieItem;
-import com.android.systemui.statusbar.pie.PieView;
-import com.android.systemui.statusbar.pie.PieView.PieDrawable;
-import com.android.systemui.statusbar.pie.PieView.PieSlice;
+import com.android.systemui.statusbar.pie.PieLayout;
+import com.android.systemui.statusbar.pie.PieLayout.PieDrawable;
+import com.android.systemui.statusbar.pie.PieLayout.PieSlice;
 import com.android.systemui.statusbar.pie.PieSliceContainer;
 import com.android.systemui.statusbar.pie.PieSysInfo;
 
 /**
- * Controller class for the default pie control.
- * <p>
- * This class is responsible for setting up the pie control, activating it, and defining and
- * executing the actions that can be triggered by the pie control.
- */
-public class PieController implements BaseStatusBar.NavigationBarCallback, PieView.OnExitListener,
-        PieView.OnSnapListener, PieItem.PieOnClickListener, PieItem.PieOnLongClickListener {
-    public static final String TAG = "PieController";
-    public static final boolean DEBUG = false;
+* Controller class for the default pie control.
+* <p>
+* This class is responsible for setting up the pie control, activating it, and defining and
+* executing the actions that can be triggered by the pie control.
+*/
+public class PieController implements BaseStatusBar.NavigationBarCallback,
+        PieLayout.OnSnapListener, PieItem.PieOnClickListener, PieItem.PieOnLongClickListener {
+    private static final String TAG = "PieController";
+    private static final boolean DEBUG = false;
 
-    private static final ButtonInfo SEARCHLIGHT = new ButtonInfo(0, 0, 0,
-            R.drawable.search_light, R.drawable.search_light, 0);
+    private final static String ACTION_HOME = "**home**";
+    private final static String ACTION_BACK = "**back**";
+    private final static String ACTION_SEARCH = "**search**";
+    private final static String ACTION_MENU = "**menu**";
+    private final static String ACTION_POWER = "**power**";
+    private final static String ACTION_NOTIFICATIONS = "**notifications**";
+    private final static String ACTION_RECENTS = "**recents**";
+    private final static String ACTION_SCREENSHOT = "**screenshot**";
+    private final static String ACTION_IME = "**ime**";
+    private final static String ACTION_LAST_APP = "**lastapp**";
+    private final static String ACTION_KILL = "**kill**";
+    private final static String ACTION_NULL = "**null**";
+
+    private String[] mClickActions = new String[7];
+    private String[] mLongpressActions = new String[7];
+    private String[] mPortraitIcons = new String[7];
+    private boolean mSecondLayerActive;
+
+    private final static String[] StockClickActions = {
+        "**back**",
+        "**home**",
+        "**recents**",
+        "**null**",
+        "**null**"
+    };
+
+    private final static String[] StockSecondLayerClickActions = {
+        "**menu**",
+        "**notifications**",
+        "**search**",
+        "**screenshot**",
+        "**ime**",
+        "**null**",
+        "**null**"
+    };
+
+    private final static String[] StockLongpress = {
+        "**null**",
+        "**null**",
+        "**null**",
+        "**null**",
+        "**null**",
+        "**null**",
+        "**null**"
+    };
 
     public static final float EMPTY_ANGLE = 10;
     public static final float START_ANGLE = 180 + EMPTY_ANGLE;
 
     private static final int MSG_INJECT_KEY_DOWN = 1066;
     private static final int MSG_INJECT_KEY_UP = 1067;
-    private static final int MSG_PIE_GAIN_FOCUS = 1068;
-    private static final int MSG_PIE_RESTORE_LISTENER_STATE = 1069;
 
     private Context mContext;
-    private PieManager mPieManager;
-    private PieView mPieContainer;
-    private boolean mIsDetaching = false;
+    private PieLayout mPieContainer;
     /**
-     * This is only needed for #toggleRecentApps() and #showSearchPanel()
-     */
+* This is only needed for #toggleRecentApps()
+*/
     private BaseStatusBar mStatusBar;
     private Vibrator mVibrator;
-    private WindowManager mWindowManager;
     private IWindowManager mWm;
     private int mBatteryLevel;
     private int mBatteryStatus;
-    private TelephonyManager mTelephonyManager;
+    private boolean mHasTelephony;
     private ServiceState mServiceState;
+    private ActivityManager mActivityManager;
+    private IStatusBarService mBarService;
+
+    private final Object mScreenshotLock = new Object();
+    private ServiceConnection mScreenshotConnection = null;
 
     // all pie slices that are managed by the controller
     private PieSliceContainer mNavigationSlice;
+    private PieSliceContainer mNavigationSliceSecondLayer;
     private PieSysInfo mSysInfo;
-    private PieItem mMenuButton;
-    private PieItem mSearchLight;
 
     private int mNavigationIconHints = 0;
     private int mDisabledFlags = 0;
-    private boolean mShowMenu = false;
     private Drawable mBackIcon;
     private Drawable mBackAltIcon;
 
-    protected int mExpandedDesktopState;
-    private int mPieTriggerSlots;
-    private int mPieTriggerMask = PiePosition.LEFT.FLAG
-            | PiePosition.BOTTOM.FLAG
-            | PiePosition.RIGHT.FLAG
-            | PiePosition.TOP.FLAG;
-    private PiePosition mPosition;
+    /**
+* Defines the positions in which pie controls may appear. This enumeration is used to store
+* an index, a flag and the android gravity for each position.
+*/
+    public enum Position {
+        LEFT(0, 0, android.view.Gravity.LEFT),
+        BOTTOM(1, 1, android.view.Gravity.BOTTOM),
+        RIGHT(2, 1, android.view.Gravity.RIGHT),
+        TOP(3, 0, android.view.Gravity.TOP);
 
-    private PieManager.PieActivationListener mPieActivationListener =
-            new PieManager.PieActivationListener(Looper.getMainLooper()) {
-        @Override
-        public void onPieActivation(int touchX, int touchY, PiePosition position, int flags) {
-            if (position == PiePosition.BOTTOM && isSearchLightEnabled() && mStatusBar != null) {
-                // if we are at the bottom and nothing else is there, use a
-                // search light!
-                mStatusBar.showSearchPanel();
-                // restore listener state immediately (after the bookkeeping), and since the
-                // search panel is a single gesture we will not trigger again
-                mHandler.obtainMessage(MSG_PIE_RESTORE_LISTENER_STATE).sendToTarget();
-            } else if (mPieContainer != null && activateFromListener(touchX, touchY, position)) {
-                // give the main thread some time to do the bookkeeping
-                mHandler.obtainMessage(MSG_PIE_GAIN_FOCUS).sendToTarget();
-            } else {
-                // if anything goes wrong, just quit the ongoing activation
-                mPieActivationListener.restoreListenerState();
-            }
+        Position(int index, int factor, int android_gravity) {
+            INDEX = index;
+            FLAG = (0x01<<index);
+            ANDROID_GRAVITY = android_gravity;
+            FACTOR = factor;
         }
-    };
 
-    private Handler mHandler = new Handler(Looper.getMainLooper()) {
+        public final int INDEX;
+        public final int FLAG;
+        public final int ANDROID_GRAVITY;
+        /**
+* This is 1 when the position is not at the axis (like {@link Position.RIGHT} is
+* at {@code Layout.getWidth()} not at {@code 0}).
+*/
+        public final int FACTOR;
+    }
+
+    private Position mPosition;
+
+    public static class Tracker {
+        public static float sDistance;
+        private float initialX = 0;
+        private float initialY = 0;
+        private float gracePeriod = 0;
+
+        private Tracker(Position position) {
+            this.position = position;
+        }
+
+        public void start(MotionEvent event) {
+            initialX = event.getX();
+            initialY = event.getY();
+            active = true;
+        }
+
+        public boolean move(MotionEvent event) {
+            if (!active) {
+                return false;
+            }
+            // Unroll the complete logic here - we want to be fast and out of the
+            // event chain as fast as possible.
+            float distance = 0;
+            boolean loaded = false;
+            switch (position) {
+                case TOP:
+                case BOTTOM:
+                    distance = Math.abs(event.getY() - initialY);
+                    break;
+                case LEFT:
+                case RIGHT:
+                    distance = Math.abs(event.getX() - initialX);
+                    break;
+            }
+            // Swipe up
+            if (distance > sDistance) {
+                loaded = true;
+                active = false;
+            }
+            return loaded;
+        }
+
+        public boolean active = false;
+        public final Position position;
+    }
+
+    public Tracker buildTracker(Position position) {
+        return new Tracker(position);
+    }
+
+    private class H extends Handler {
         public void handleMessage(Message m) {
             final InputManager inputManager = InputManager.getInstance();
             switch (m.what) {
@@ -166,21 +269,10 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
                     inputManager.injectInputEvent((KeyEvent) m.obj,
                             InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
                     break;
-                case MSG_PIE_GAIN_FOCUS:
-                    if (mPieContainer != null) {
-                        if (!mPieActivationListener.gainTouchFocus(mPieContainer.getWindowToken())) {
-                            mPieContainer.exit();
-                        }
-                    } else {
-                        mPieActivationListener.restoreListenerState();
-                    }
-                    break;
-                case MSG_PIE_RESTORE_LISTENER_STATE:
-                    mPieActivationListener.restoreListenerState();
-                    break;
             }
         }
-    };
+    }
+    private H mHandler = new H();
 
     private void injectKeyDelayed(int keyCode, long when) {
         mHandler.removeMessages(MSG_INJECT_KEY_DOWN);
@@ -206,50 +298,101 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
 
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
-            // trigger setupNavigationItems()
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.NAV_BUTTONS), false, this, UserHandle.USER_ALL);
-            resolver.registerContentObserver(Settings.Secure.getUriFor(
-                    Settings.Secure.KILL_APP_LONGPRESS_BACK), false, this, UserHandle.USER_ALL);
-            // trigger setupContainer()
+                    Settings.System.PIE_BUTTON_COLOR), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.PIE_CONTROLS), false, this, UserHandle.USER_ALL);
+                    Settings.System.PIE_BUTTON_PRESSED_COLOR), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.EXPANDED_DESKTOP_STATE), false, this, UserHandle.USER_ALL);
+                    Settings.System.PIE_BUTTON_OUTLINE_COLOR), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.EXPANDED_DESKTOP_STYLE), false, this, UserHandle.USER_ALL);
-            // trigger setupListener()
+                    Settings.System.PIE_ICON_COLOR), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.PIE_POSITIONS), false, this, UserHandle.USER_ALL);
+                    Settings.System.PIE_ICON_COLOR_MODE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.PIE_SENSITIVITY), false, this, UserHandle.USER_ALL);
+                    Settings.System.PIE_BUTTON_ALPHA), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PIE_BUTTON_PRESSED_ALPHA), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PIE_SECOND_LAYER_ACTIVE), false, this);
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_LONG_PRESS_ENABLE),
+                    false,
+                    this);
+            for (int j = 0; j < 5; j++) { // watch all 5 settings for changes.
+                resolver.registerContentObserver(
+                        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_ACTIVITIES[j]),
+                        false,
+                        this);
+                resolver.registerContentObserver(
+                        Settings.System
+                                .getUriFor(Settings.System.PIE_LONGPRESS_ACTIVITIES[j]),
+                        false,
+                        this);
+                resolver.registerContentObserver(
+                        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_ICONS[j]),
+                        false,
+                        this);
+            }
         }
 
         @Override
         public void onChange(boolean selfChange) {
-            ContentResolver resolver = mContext.getContentResolver();
-            boolean expanded = Settings.System.getIntForUser(resolver,
-                    Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT) == 1;
-            if (expanded) {
-                mExpandedDesktopState = Settings.System.getIntForUser(resolver,
-                        Settings.System.EXPANDED_DESKTOP_STYLE, 0, UserHandle.USER_CURRENT);
+            boolean secondLayerActive = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.PIE_SECOND_LAYER_ACTIVE, 0) == 1;
+
+            if (mSecondLayerActive != secondLayerActive) {
+                if (secondLayerActive) {
+                    // second layer is enabled....start observing the settings
+                    mSecondLayerObserver.observe();
+                } else {
+                    // second layer is disabled....unregister observer for it
+                    mContext.getContentResolver().unregisterContentObserver(mSecondLayerObserver);
+                }
+                mSecondLayerActive = secondLayerActive;
+                constructSlices();
             } else {
-                mExpandedDesktopState = 0;
-            }
-            if (isEnabled()) {
-                setupContainer();
                 setupNavigationItems();
-                setupListener();
-            } else if (!isShowing()) {
-                detachContainer();
-            } else {
-                // delay detach to #onExit()
-                mIsDetaching = true;
             }
         }
     }
-
     private SettingsObserver mSettingsObserver = new SettingsObserver(mHandler);
+
+    // second layer observer is only active when user activated it to
+    // reduce mem usage on normal mode
+    private final class SecondLayerObserver extends ContentObserver {
+        SecondLayerObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            ContentResolver resolver = mContext.getContentResolver();
+            resolver.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.PIE_LONG_PRESS_ENABLE_SECOND_LAYER),
+                    false,
+                    this);
+            for (int j = 0; j < 7; j++) { // watch all 7 settings for changes.
+                resolver.registerContentObserver(
+                        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_ACTIVITIES_SECOND_LAYER[j]),
+                        false,
+                        this);
+                resolver.registerContentObserver(
+                        Settings.System
+                                .getUriFor(Settings.System.PIE_LONGPRESS_ACTIVITIES_SECOND_LAYER[j]),
+                        false,
+                        this);
+                resolver.registerContentObserver(
+                        Settings.System.getUriFor(Settings.System.PIE_CUSTOM_ICONS_SECOND_LAYER[j]),
+                        false,
+                        this);
+            }
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            setupNavigationItems();
+        }
+    }
+    private SecondLayerObserver mSecondLayerObserver = new SecondLayerObserver(mHandler);
 
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -261,7 +404,7 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
                          BatteryManager.BATTERY_STATUS_UNKNOWN);
             } else if (Intent.ACTION_SCREEN_OFF.equals(action)) {
                 // Give up on screen off. what's the point in pie controls if you don't see them?
-                if (isShowing()) {
+                if (mPieContainer != null) {
                     mPieContainer.exit();
                 }
             }
@@ -278,55 +421,68 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
     public PieController(Context context) {
         mContext = context;
 
-        mPieManager = PieManager.getInstance();
+        mActivityManager = (ActivityManager) mContext.getSystemService(Activity.ACTIVITY_SERVICE);
+        mBarService = IStatusBarService.Stub.asInterface(
+                ServiceManager.getService(Context.STATUS_BAR_SERVICE));
+
         mVibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
-        mWindowManager = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
         mWm = IWindowManager.Stub.asInterface(ServiceManager.getService("window"));
 
-        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            mTelephonyManager =
-                    (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
-        }
+        final PackageManager pm = mContext.getPackageManager();
+        mHasTelephony = pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
 
-        final Resources res = mContext.getResources();
-
-        mBackIcon = res.getDrawable(R.drawable.ic_sysbar_back);
-        mBackAltIcon = res.getDrawable(R.drawable.ic_sysbar_back_ime);
-
-        mPieManager.setPieActivationListener(mPieActivationListener);
-
-        // start listening for changes (calls setupListener & setupNavigationItems)
-        mSettingsObserver.observe();
-        mSettingsObserver.onChange(true);
+        Tracker.sDistance = mContext.getResources().getDimensionPixelSize(R.dimen.pie_trigger_distance);
     }
 
-    public void userSwitched(int newUserId) {
-        mSettingsObserver.onChange(true);
-    }
-
-    public void attachStatusBar(BaseStatusBar statusBar) {
+    public void attachTo(BaseStatusBar statusBar) {
         mStatusBar = statusBar;
     }
 
-    private void setupContainer() {
-        if (mPieContainer == null) {
-            mPieContainer = new PieView(mContext);
-            mPieContainer.setOnSnapListener(this);
-            mPieContainer.setOnExitListener(this);
+    public void attachTo(PieLayout container) {
+        mPieContainer = container;
 
-            if (mTelephonyManager != null) {
-                mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_SERVICE_STATE);
-            }
-
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(Intent.ACTION_BATTERY_CHANGED);
-            filter.addAction(Intent.ACTION_SCREEN_OFF);
-            mContext.registerReceiver(mBroadcastReceiver, filter);
+        if (DEBUG) {
+            Slog.d(TAG, "Attaching to container: " + container);
         }
 
-        mPieContainer.clearSlices();
+        mPieContainer.setOnSnapListener(this);
 
+        mSecondLayerActive = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.PIE_SECOND_LAYER_ACTIVE, 0) == 1;
+
+        // construct the slices
+        constructSlices();
+
+        // start listening for changes
+        mSettingsObserver.observe();
+
+        // start listening for second layer observer
+        // only when active
+        if (mSecondLayerActive) {
+            mSecondLayerObserver.observe();
+        }
+
+        mContext.registerReceiver(mBroadcastReceiver,
+                new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_BATTERY_CHANGED);
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        mContext.registerReceiver(mBroadcastReceiver, filter);
+
+        if (mHasTelephony) {
+            TelephonyManager telephonyManager =
+                    (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+            telephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_SERVICE_STATE);
+        }
+    }
+
+    private void constructSlices() {
         final Resources res = mContext.getResources();
+
+        // if already constructed...clear the slices
+        if (mPieContainer != null) {
+            mPieContainer.clearSlices();
+        }
 
         // construct navbar slice
         int inner = res.getDimensionPixelSize(R.dimen.pie_navbar_radius);
@@ -334,169 +490,268 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
         mNavigationSlice = new PieSliceContainer(mPieContainer, PieSlice.IMPORTANT
                 | PieDrawable.DISPLAY_ALL);
         mNavigationSlice.setGeometry(START_ANGLE, 180 - 2 * EMPTY_ANGLE, inner, outer);
+
+        // construct maybe navbar slice second layer
+        if (mSecondLayerActive) {
+            inner = res.getDimensionPixelSize(R.dimen.pie_navbar_second_layer_radius);
+            outer = inner + res.getDimensionPixelSize(R.dimen.pie_navbar_height);
+            mNavigationSliceSecondLayer = new PieSliceContainer(mPieContainer, PieSlice.IMPORTANT
+                    | PieDrawable.DISPLAY_ALL);
+            mNavigationSliceSecondLayer.setGeometry(START_ANGLE, 180 - 2 * EMPTY_ANGLE, inner, outer);
+        }
+
+        // setup buttons and add the slices finally
+        setupNavigationItems();
         mPieContainer.addSlice(mNavigationSlice);
+        if (mSecondLayerActive) {
+            mPieContainer.addSlice(mNavigationSliceSecondLayer);
+            // adjust dimensions for sysinfo when second layer is active
+            inner = res.getDimensionPixelSize(R.dimen.pie_sysinfo_second_layer_radius);
+        } else {
+            inner = res.getDimensionPixelSize(R.dimen.pie_sysinfo_radius);
+        }
 
         // construct sysinfo slice
-        inner = res.getDimensionPixelSize(R.dimen.pie_sysinfo_radius);
         outer = inner + res.getDimensionPixelSize(R.dimen.pie_sysinfo_height);
         mSysInfo = new PieSysInfo(mContext, mPieContainer, this, PieDrawable.DISPLAY_NOT_AT_TOP);
         mSysInfo.setGeometry(START_ANGLE, 180 - 2 * EMPTY_ANGLE, inner, outer);
         mPieContainer.addSlice(mSysInfo);
     }
 
-    @Override
-    public void onExit() {
-        mWindowManager.removeView(mPieContainer);
-        mPieActivationListener.restoreListenerState();
-        if (mIsDetaching) {
-            detachContainer();
-            mIsDetaching = false;
-        }
-    }
-
-    private void detachContainer() {
-        if (mPieContainer == null) {
-            return;
-        }
-
-        mPieManager.updatePieActivationListener(mPieActivationListener, 0);
-
-        if (mTelephonyManager != null) {
-            mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
-        }
-
-        mContext.unregisterReceiver(mBroadcastReceiver);
-
-        mPieContainer.clearSlices();
-        mPieContainer = null;
-    }
-
-    private void setupListener() {
-        ContentResolver resolver = mContext.getContentResolver();
-
-        mPieTriggerSlots = Settings.System.getIntForUser(resolver,
-                Settings.System.PIE_POSITIONS, PiePosition.BOTTOM.FLAG, UserHandle.USER_CURRENT);
-
-        int sensitivity = Settings.System.getIntForUser(resolver,
-                Settings.System.PIE_SENSITIVITY, 3, UserHandle.USER_CURRENT);
-        if (sensitivity < PieServiceConstants.SENSITIVITY_LOWEST
-                || sensitivity > PieServiceConstants.SENSITIVITY_HIGHEST) {
-            sensitivity = PieServiceConstants.SENSITIVITY_DEFAULT;
-        }
-
-        mPieManager.updatePieActivationListener(mPieActivationListener,
-                sensitivity<<PieServiceConstants.SENSITIVITY_SHIFT
-                | mPieTriggerSlots & mPieTriggerMask);
-    }
-
     private void setupNavigationItems() {
-        int minimumImageSize = (int)mContext.getResources().getDimension(R.dimen.pie_item_size);
-        boolean killAppLongPress = Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                Settings.Secure.KILL_APP_LONGPRESS_BACK, 0, UserHandle.USER_CURRENT) == 1;
-        ButtonInfo[] buttons = NavigationButtons.loadButtonMap(mContext);
+        ContentResolver resolver = mContext.getContentResolver();
+        int minimumImageSize = (int) mContext.getResources().getDimension(R.dimen.pie_item_size);
 
         mNavigationSlice.clear();
+        prepareBackAltIcon();
 
-        for (int i = 0; i < buttons.length; i++) {
-            if (buttons[i] != NavigationButtons.EMPTY) {
-                ButtonInfo bi = buttons[i];
-
-                // search light is at the same position as the home button
-                if (bi == NavigationButtons.HOME) {
-                    // search light has a width of 6 to take the complete space that normally
-                    // BACK HOME RECENT would occupy
-                    mSearchLight = constructItem(6, SEARCHLIGHT,
-                            SEARCHLIGHT.portResource, minimumImageSize, false);
-                    mNavigationSlice.addItem(mSearchLight);
-                }
-
-                boolean canLongPress = bi == NavigationButtons.HOME
-                        || (bi == NavigationButtons.BACK && killAppLongPress);
-                boolean isSmall = NavigationButtons.IS_SLOT_SMALL[i];
-                mNavigationSlice.addItem(constructItem(isSmall ? 1 : 2, bi,
-                        isSmall ? bi.sideResource : bi.portResource, minimumImageSize,
-                        canLongPress));
-            }
+        int numberOfButtons = Settings.System.getInt(resolver,
+                Settings.System.PIE_BUTTONS_QTY, 0);
+        if (numberOfButtons == 0) {
+            numberOfButtons = 3;
+            Settings.System.putInt(resolver,
+                    Settings.System.PIE_BUTTONS_QTY, 3);
         }
-        mMenuButton = findItem(NavigationButtons.CONDITIONAL_MENU);
+        getCustomActionsAndConstruct(resolver, false, numberOfButtons, minimumImageSize);
+
+        if (mSecondLayerActive) {
+            mNavigationSliceSecondLayer.clear();
+            numberOfButtons = Settings.System.getInt(resolver,
+                    Settings.System.PIE_BUTTONS_QTY_SECOND_LAYER, 0);
+            if (numberOfButtons == 0) {
+                numberOfButtons = 5;
+                Settings.System.putInt(resolver,
+                        Settings.System.PIE_BUTTONS_QTY_SECOND_LAYER, 5);
+            }
+            getCustomActionsAndConstruct(resolver, true, numberOfButtons, minimumImageSize);
+        }
 
         setNavigationIconHints(mNavigationIconHints, true);
-        setMenuVisibility(mShowMenu);
     }
 
-    private PieItem constructItem(int width, ButtonInfo type, int image, int minimumImageSize,
-            boolean canLongPress) {
+    private void getCustomActionsAndConstruct(ContentResolver resolver,
+            boolean secondLayer, int numberOfButtons, int minimumImageSize) {
+        int i = 5;
+        if (secondLayer) {
+            i = 7;
+        }
+
+        for (int j = 0; j < i; j++) {
+            if (secondLayer) {
+                mClickActions[j] = Settings.System.getString(resolver,
+                        Settings.System.PIE_CUSTOM_ACTIVITIES_SECOND_LAYER[j]);
+            } else {
+                mClickActions[j] = Settings.System.getString(resolver,
+                        Settings.System.PIE_CUSTOM_ACTIVITIES[j]);
+            }
+            if (mClickActions[j] == null) {
+                if (secondLayer) {
+                    mClickActions[j] = StockSecondLayerClickActions[j];
+                    Settings.System.putString(resolver,
+                            Settings.System.PIE_CUSTOM_ACTIVITIES_SECOND_LAYER[j], mClickActions[j]);
+                } else {
+                    mClickActions[j] = StockClickActions[j];
+                    Settings.System.putString(resolver,
+                            Settings.System.PIE_CUSTOM_ACTIVITIES[j], mClickActions[j]);
+                }
+            }
+
+            if (secondLayer) {
+                mLongpressActions[j] = Settings.System.getString(resolver,
+                        Settings.System.PIE_LONGPRESS_ACTIVITIES_SECOND_LAYER[j]);
+            } else {
+                mLongpressActions[j] = Settings.System.getString(resolver,
+                        Settings.System.PIE_LONGPRESS_ACTIVITIES[j]);
+            }
+
+            if (mLongpressActions[j] == null) {
+                mLongpressActions[j] = StockLongpress[j];
+                if (secondLayer) {
+                    Settings.System.putString(resolver,
+                            Settings.System.PIE_LONGPRESS_ACTIVITIES_SECOND_LAYER[j], mLongpressActions[j]);
+                } else {
+                    Settings.System.putString(resolver,
+                            Settings.System.PIE_LONGPRESS_ACTIVITIES[j], mLongpressActions[j]);
+                }
+            }
+
+            if (secondLayer) {
+                mPortraitIcons[j] = Settings.System.getString(resolver,
+                        Settings.System.PIE_CUSTOM_ICONS_SECOND_LAYER[j]);
+            } else {
+                mPortraitIcons[j] = Settings.System.getString(resolver,
+                        Settings.System.PIE_CUSTOM_ICONS[j]);
+            }
+
+            if (mPortraitIcons[j] == null) {
+                mPortraitIcons[j] = "";
+                if (secondLayer) {
+                    Settings.System.putString(resolver,
+                            Settings.System.PIE_CUSTOM_ICONS_SECOND_LAYER[j], "");
+                } else {
+                    Settings.System.putString(resolver,
+                            Settings.System.PIE_CUSTOM_ICONS[j], "");
+                }
+            }
+        }
+
+        int longpressEnabled;
+        if (secondLayer) {
+            longpressEnabled = Settings.System.getInt(mContext.getContentResolver(),
+                     Settings.System.PIE_LONG_PRESS_ENABLE_SECOND_LAYER, 0);
+        } else {
+            longpressEnabled = Settings.System.getInt(mContext.getContentResolver(),
+                     Settings.System.PIE_LONG_PRESS_ENABLE, 0);
+        }
+        int buttonWidth = 7 / numberOfButtons;
+
+        for (int j = 0; j < numberOfButtons; j++) {
+
+            if (longpressEnabled == 0) {
+                        mLongpressActions[j] = "**null**";
+            }
+
+            if (secondLayer) {
+                mNavigationSliceSecondLayer.addItem(constructItem(buttonWidth, mClickActions[j],
+                        mLongpressActions[j], mPortraitIcons[j], minimumImageSize));
+            } else {
+                mNavigationSlice.addItem(constructItem(buttonWidth, mClickActions[j],
+                        mLongpressActions[j], mPortraitIcons[j], minimumImageSize));
+            }
+        }
+    }
+
+    private PieItem constructItem(int width, String clickAction, String longPressAction,
+                String imageUri, int minimumImageSize) {
         ImageView view = new ImageView(mContext);
-        view.setImageResource(image);
+        int iconType = setPieItemIcon(view, imageUri, clickAction);
         view.setMinimumWidth(minimumImageSize);
         view.setMinimumHeight(minimumImageSize);
         LayoutParams lp = new LayoutParams(minimumImageSize, minimumImageSize);
         view.setLayoutParams(lp);
-        PieItem item = new PieItem(mContext, mPieContainer, 0, width, type, view);
+        PieItem item = new PieItem(mContext, mPieContainer, 0, width, clickAction,
+                longPressAction, view, iconType);
         item.setOnClickListener(this);
-        if (canLongPress) {
+        if (!longPressAction.equals(ACTION_NULL)) {
             item.setOnLongClickListener(this);
         }
         return item;
     }
 
-    private PieItem findItem(ButtonInfo type) {
-        for (PieItem item : mNavigationSlice.getItems()) {
-            if (type == item.tag) {
-                return item;
+    private int setPieItemIcon(ImageView view, String imageUri, String clickAction) {
+        boolean drawableSet = false;
+        if (imageUri != null) {
+            if (imageUri.length() > 0) {
+                // custom icon from the URI here
+                File f = new File(Uri.parse(imageUri).getPath());
+                if (f.exists()) {
+                    Drawable d = new BitmapDrawable(mContext.getResources(), f.getAbsolutePath());
+                    if (clickAction.equals(ACTION_BACK)) {
+                        mBackIcon = d;
+                    }
+                    view.setImageDrawable(d);
+                    drawableSet = true;
+                    return 2;
+                }
+            }
+            if (!drawableSet && clickAction != null && !clickAction.startsWith("**")) {
+                // here it's not a system action (**action**), so it must be an
+                // app intent
+                try {
+                    Drawable d = mContext.getPackageManager().getActivityIcon(
+                            Intent.parseUri(clickAction, 0));
+                    view.setImageDrawable(d);
+                    drawableSet = true;
+                    return 1;
+                } catch (NameNotFoundException e) {
+                    e.printStackTrace();
+                    drawableSet = false;
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
+                    drawableSet = false;
+                }
             }
         }
-        return null;
+
+        if (!drawableSet) {
+            view.setImageDrawable(getPieSystemIconImage(clickAction));
+        }
+        return 0;
     }
 
-    private void setItemWithTagVisibility(ButtonInfo type, boolean show) {
-        PieItem item = findItem(type);
-        if (item != null) {
-            item.show(show);
+    private Drawable getPieSystemIconImage(String uri) {
+        if (uri == null)
+            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_null);
+
+        if (uri.startsWith("**")) {
+            if (uri.equals(ACTION_HOME)) {
+                return mContext.getResources().getDrawable(R.drawable.ic_sysbar_home);
+            } else if (uri.equals(ACTION_BACK)) {
+                mBackIcon = mContext.getResources().getDrawable(R.drawable.ic_sysbar_back);
+                return mBackIcon;
+            } else if (uri.equals(ACTION_RECENTS)) {
+                return mContext.getResources().getDrawable(R.drawable.ic_sysbar_recent);
+            } else if (uri.equals(ACTION_SCREENSHOT)) {
+                return mContext.getResources().getDrawable(R.drawable.ic_sysbar_screenshot);
+            } else if (uri.equals(ACTION_SEARCH)) {
+                return mContext.getResources().getDrawable(R.drawable.ic_sysbar_search);
+            } else if (uri.equals(ACTION_MENU)) {
+                return mContext.getResources().getDrawable(R.drawable.ic_sysbar_menu_big);
+            } else if (uri.equals(ACTION_IME)) {
+                return mContext.getResources().getDrawable(R.drawable.ic_sysbar_ime_switcher);
+            } else if (uri.equals(ACTION_LAST_APP)) {
+                return mContext.getResources().getDrawable(R.drawable.ic_sysbar_lastapp);
+            } else if (uri.equals(ACTION_KILL)) {
+                return mContext.getResources().getDrawable(R.drawable.ic_sysbar_killtask);
+            } else if (uri.equals(ACTION_POWER)) {
+                return mContext.getResources().getDrawable(R.drawable.ic_sysbar_power);
+            } else if (uri.equals(ACTION_NOTIFICATIONS)) {
+                return mContext.getResources().getDrawable(R.drawable.ic_sysbar_notifications);
+            }
+        }
+        return mContext.getResources().getDrawable(R.drawable.ic_sysbar_null);
+    }
+
+    private void prepareBackAltIcon() {
+        int drawableColor = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.PIE_ICON_COLOR, -2));
+
+        mBackAltIcon = mContext.getResources().getDrawable(R.drawable.ic_sysbar_back_ime);
+        if (drawableColor != -2) {
+            mBackAltIcon.setColorFilter(drawableColor, Mode.SRC_ATOP);
+        } else {
+            mBackAltIcon.setColorFilter(null);
         }
     }
 
-    public boolean activateFromListener(int touchX, int touchY, PiePosition position) {
-        if (isShowing()) {
-            return false;
-        }
+    public void activateFromTrigger(View view, MotionEvent event, Position position) {
+        if (mPieContainer != null && !isShowing()) {
+            doHapticTriggerFeedback();
 
-        doHapticTriggerFeedback();
-
-        mPosition = position;
-        Point center = new Point(touchX, touchY);
-        mPieContainer.setSnapPoints(mPieTriggerMask & ~mPieTriggerSlots);
-        mPieContainer.activate(center, position);
-        mWindowManager.addView(mPieContainer, generateLayoutParam());
-
-        return true;
-    }
-
-    private WindowManager.LayoutParams generateLayoutParam() {
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL,
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
-                PixelFormat.TRANSLUCENT);
-        lp.privateFlags = WindowManager.LayoutParams.PRIVATE_FLAG_FORCE_SHOW_NAV_BAR;
-        // This title is for debugging only. See: dumpsys window
-        lp.setTitle("PieControlPanel");
-        lp.windowAnimations = android.R.style.Animation;
-        lp.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_BEHIND;
-        return lp;
-    }
-
-    public void updatePieTriggerMask(int newMask) {
-        int oldState = mPieTriggerSlots & mPieTriggerMask;
-        mPieTriggerMask = newMask;
-
-        // check if we are active and if it would make a change at all
-        if (mPieContainer != null && ((mPieTriggerSlots & mPieTriggerMask) != oldState)) {
-            setupListener();
+            mPosition = position;
+            Point center = new Point((int) event.getRawX(), (int) event.getRawY());
+            mPieContainer.activate(center, position);
+            mPieContainer.invalidate();
         }
     }
 
@@ -517,25 +772,50 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
         if (DEBUG) Slog.v(TAG, "Pie navigation hints: " + hints);
 
         mNavigationIconHints = hints;
+        PieItem item;
 
-        PieItem item = findItem(NavigationButtons.HOME);
-        if (item != null) {
-            boolean isNop = (hints & StatusBarManager.NAVIGATION_HINT_HOME_NOP) != 0;
-            item.setAlpha(isNop ? 0.5f : 1.0f);
-        }
-        item = findItem(NavigationButtons.RECENT);
-        if (item != null) {
-            boolean isNop = (hints & StatusBarManager.NAVIGATION_HINT_RECENT_NOP) != 0;
-            item.setAlpha(isNop ? 0.5f : 1.0f);
-        }
-        item = findItem(NavigationButtons.BACK);
-        if (item != null) {
-            boolean isNop = (hints & StatusBarManager.NAVIGATION_HINT_BACK_NOP) != 0;
-            boolean isAlt = (hints & StatusBarManager.NAVIGATION_HINT_BACK_ALT) != 0;
-            item.setAlpha(isNop ? 0.5f : 1.0f);
-            item.setImageDrawable(isAlt ? mBackAltIcon : mBackIcon);
+        for (int j = 0; j < 2; j++) {
+            item = findItem(ACTION_HOME, j);
+            if (item != null) {
+                boolean isNop = (hints & StatusBarManager.NAVIGATION_HINT_HOME_NOP) != 0;
+                item.setAlpha(isNop ? 0.5f : 1.0f);
+            }
+            item = findItem(ACTION_RECENTS, j);
+            if (item != null) {
+                boolean isNop = (hints & StatusBarManager.NAVIGATION_HINT_RECENT_NOP) != 0;
+                item.setAlpha(isNop ? 0.5f : 1.0f);
+            }
+            item = findItem(ACTION_BACK, j);
+            if (item != null) {
+                boolean isNop = (hints & StatusBarManager.NAVIGATION_HINT_BACK_NOP) != 0;
+                boolean isAlt = (hints & StatusBarManager.NAVIGATION_HINT_BACK_ALT) != 0;
+                item.setAlpha(isNop ? 0.5f : 1.0f);
+                item.setImageDrawable(isAlt ? mBackAltIcon : mBackIcon);
+            }
         }
         setDisabledFlags(mDisabledFlags, true);
+    }
+
+    private PieItem findItem(String type, int secondLayer) {
+        if (secondLayer == 1) {
+            if (mSecondLayerActive && mNavigationSliceSecondLayer != null) {
+                for (PieItem item : mNavigationSliceSecondLayer.getItems()) {
+                    String itemType = (String) item.tag;
+                    if (type.equals(itemType)) {
+                       return item;
+                    }
+                }
+            }
+        } else {
+            for (PieItem item : mNavigationSlice.getItems()) {
+                String itemType = (String) item.tag;
+                if (type.equals(itemType)) {
+                   return item;
+                }
+            }
+        }
+
+        return null;
     }
 
     @Override
@@ -558,33 +838,32 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
         final boolean disableRecent = ((disabledFlags & View.STATUS_BAR_DISABLE_RECENT) != 0);
         final boolean disableBack = ((disabledFlags & View.STATUS_BAR_DISABLE_BACK) != 0)
                 && ((mNavigationIconHints & StatusBarManager.NAVIGATION_HINT_BACK_ALT) == 0);
-        final boolean disableSearch = ((disabledFlags & View.STATUS_BAR_DISABLE_SEARCH) != 0);
 
-        setItemWithTagVisibility(NavigationButtons.BACK, !disableBack);
-        setItemWithTagVisibility(NavigationButtons.HOME, !disableHome);
-        setItemWithTagVisibility(NavigationButtons.RECENT, !disableRecent);
-        setItemWithTagVisibility(NavigationButtons.ALWAYS_MENU, !disableRecent);
-        setItemWithTagVisibility(NavigationButtons.MENU_BIG, !disableRecent);
-        setItemWithTagVisibility(NavigationButtons.SEARCH, !disableRecent);
-        // enable search light when nothing except search is enabled
-        if (mSearchLight != null) {
-            mSearchLight.show(disableHome && disableRecent && disableBack && !disableSearch);
+        PieItem item;
+        for (int j = 0; j < 2; j++) {
+            item = findItem(ACTION_BACK, j);
+            if (item != null) {
+                item.show(!disableBack);
+            }
+            item = findItem(ACTION_HOME, j);
+            if (item != null) {
+                item.show(!disableHome);
+            }
+            item = findItem(ACTION_RECENTS, j);
+            if (item != null) {
+                item.show(!disableRecent);
+            }
         }
-        setMenuVisibility(mShowMenu);
     }
 
     @Override
     public void setMenuVisibility(boolean showMenu) {
         // this call may come from outside
-        if (mMenuButton != null) {
-            mMenuButton.show(showMenu);
-        }
-
-        mShowMenu = showMenu;
+        // nothing to do here
     }
 
     @Override
-    public void onSnap(PiePosition position) {
+    public void onSnap(Position position) {
         if (position == mPosition) {
             return;
         }
@@ -595,51 +874,89 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
             Slog.d(TAG, "onSnap from " + position.name());
         }
 
-        int triggerSlots = Settings.System.getIntForUser(mContext.getContentResolver(),
-                Settings.System.PIE_POSITIONS, PiePosition.BOTTOM.FLAG, UserHandle.USER_CURRENT);
+        int triggerSlots = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.PIE_GRAVITY, Position.LEFT.FLAG);
 
         triggerSlots = triggerSlots & ~mPosition.FLAG | position.FLAG;
 
-        Settings.System.putIntForUser(mContext.getContentResolver(),
-                Settings.System.PIE_POSITIONS, triggerSlots, UserHandle.USER_CURRENT);
-    }
-
-    @Override
-    public void onClick(PieItem item) {
-        long when = SystemClock.uptimeMillis();
-        ButtonInfo bi = (ButtonInfo) item.tag;
-
-        // play sound effect directly, since detaching the container will prevent to play the sound
-        // at a later time.
-        mPieContainer.playSoundEffect(SoundEffectConstants.CLICK);
-        if (bi.keyCode != 0) {
-            injectKeyDelayed(bi.keyCode, when);
-        } else {
-            // provide the same haptic feedback as if a virtual key is pressed
-            mPieContainer.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
-            if (bi == NavigationButtons.RECENT) {
-                if (mStatusBar != null) {
-                    mStatusBar.toggleRecentApps();
-                }
-            } else if (bi == SEARCHLIGHT) {
-                launchAssistAction(true);
-            }
-        }
+        Settings.System.putInt(mContext.getContentResolver(),
+                Settings.System.PIE_GRAVITY, triggerSlots);
     }
 
     @Override
     public void onLongClick(PieItem item) {
-        ButtonInfo bi = (ButtonInfo) item.tag;
+        String type = (String) item.longTag;
         mPieContainer.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
         mPieContainer.playSoundEffect(SoundEffectConstants.CLICK);
+        processAction(type);
+    }
 
-        if (bi == NavigationButtons.HOME) {
-            launchAssistAction(false);
-        } else if (bi == NavigationButtons.BACK) {
-            if (DevUtils.killForegroundApplication(mContext)) {
-                Toast.makeText(mContext, com.android.internal.R.string.app_killed_message,
-                        Toast.LENGTH_SHORT).show();
+    @Override
+    public void onClick(PieItem item) {
+        String type = (String) item.tag;
+        mPieContainer.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+        mPieContainer.playSoundEffect(SoundEffectConstants.CLICK);
+        processAction(type);
+    }
+
+    private void processAction(String type) {
+        long when = SystemClock.uptimeMillis();
+
+        if (type.equals(ACTION_NULL) || type == null) {
+            return;
+        } else if (type.equals(ACTION_HOME)) {
+            injectKeyDelayed(KeyEvent.KEYCODE_HOME, when);
+            return;
+        } else if (type.equals(ACTION_BACK)) {
+            injectKeyDelayed(KeyEvent.KEYCODE_BACK, when);
+            return;
+        } else if (type.equals(ACTION_SEARCH)) {
+            injectKeyDelayed(KeyEvent.KEYCODE_SEARCH, when);
+            return;
+        } else if (type.equals(ACTION_MENU)) {
+            injectKeyDelayed(KeyEvent.KEYCODE_MENU, when);
+            return;
+        } else if (type.equals(ACTION_POWER)) {
+            PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+            pm.goToSleep(SystemClock.uptimeMillis());
+            return;
+        } else if (type.equals(ACTION_IME)) {
+            mContext.sendBroadcast(new Intent("android.settings.SHOW_INPUT_METHOD_PICKER"));
+            return;
+        } else if (type.equals(ACTION_KILL)) {
+            mHandler.post(mKillTask);
+            return;
+        } else if (type.equals(ACTION_LAST_APP)) {
+            toggleLastApp();
+            return;
+        } else if (type.equals(ACTION_RECENTS)) {
+            try {
+                mBarService.toggleRecentApps();
+            } catch (RemoteException e) {
+                // let it go.
             }
+            return;
+        } else if (type.equals(ACTION_SCREENSHOT)) {
+            takeScreenshot();
+            return;
+        } else if (type.equals(ACTION_NOTIFICATIONS)) {
+            try {
+                mBarService.toggleNotificationShade();
+            } catch (RemoteException e) {
+                // wtf is this
+            }
+            return;
+        } else { // we must have a custom uri
+            try {
+                Intent intent = Intent.parseUri(type, 0);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                mContext.startActivity(intent);
+            } catch (URISyntaxException e) {
+                Log.e(TAG, "URISyntaxException: [" + type + "]");
+            } catch (ActivityNotFoundException e){
+                Log.e(TAG, "ActivityNotFound: [" + type + "]");
+            }
+            return;
         }
     }
 
@@ -655,56 +972,12 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
         }
     }
 
-    private void launchAssistAction(boolean force) {
-        boolean isKeyguardShowing = false;
-        try {
-            isKeyguardShowing = mWm.isKeyguardLocked();
-        } catch (RemoteException e) {
-            // oh damn ...
-        }
-
-        if (isKeyguardShowing && force) {
-            // Have keyguard show the bouncer and launch the activity if the user succeeds.
-            try {
-                mWm.showAssistant();
-            } catch (RemoteException e) {
-                // too bad, so sad...
-            }
-        } else {
-            Intent intent = ((SearchManager) mContext.getSystemService(Context.SEARCH_SERVICE))
-                    .getAssistIntent(mContext, UserHandle.USER_CURRENT);
-
-            if (intent != null) {
-                try {
-                    ActivityOptions opts = ActivityOptions.makeCustomAnimation(mContext,
-                            R.anim.search_launch_enter, R.anim.search_launch_exit);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    mContext.startActivityAsUser(intent, opts.toBundle(),
-                            new UserHandle(UserHandle.USER_CURRENT));
-                } catch (ActivityNotFoundException ignored) {
-                    // fall through
-                }
-            }
-        }
-    }
-
     public boolean isShowing() {
         return mPieContainer != null && mPieContainer.isShowing();
     }
 
-    public boolean isSearchLightEnabled() {
-        return mSearchLight != null && (mSearchLight.flags & PieDrawable.VISIBLE) != 0;
-    }
-
-    public boolean isEnabled() {
-        int pie = Settings.System.getIntForUser(mContext.getContentResolver(),
-                Settings.System.PIE_CONTROLS, 0, UserHandle.USER_CURRENT);
-
-        return (pie == 1 && mExpandedDesktopState != 0) || pie == 2;
-    }
-
     public String getOperatorState() {
-        if (mTelephonyManager == null) {
+        if (!mHasTelephony) {
             return null;
         }
         if (mServiceState == null || mServiceState.getState() == ServiceState.STATE_OUT_OF_SERVICE) {
@@ -728,4 +1001,159 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
         }
         return mContext.getString(R.string.pie_battery_status_discharging, mBatteryLevel);
     }
+
+    Runnable mKillTask = new Runnable() {
+        public void run() {
+            final Intent intent = new Intent(Intent.ACTION_MAIN);
+            String defaultHomePackage = "com.android.launcher";
+            intent.addCategory(Intent.CATEGORY_HOME);
+            final ResolveInfo res = mContext.getPackageManager().resolveActivity(intent, 0);
+            if (res.activityInfo != null && !res.activityInfo.packageName.equals("android")) {
+                defaultHomePackage = res.activityInfo.packageName;
+            }
+            boolean targetKilled = false;
+            final ActivityManager am = (ActivityManager) mContext
+                    .getSystemService(Activity.ACTIVITY_SERVICE);
+            List<RunningAppProcessInfo> apps = am.getRunningAppProcesses();
+            for (RunningAppProcessInfo appInfo : apps) {
+                int uid = appInfo.uid;
+                // Make sure it's a foreground user application (not system,
+                // root, phone, etc.)
+                if (uid >= Process.FIRST_APPLICATION_UID && uid <= Process.LAST_APPLICATION_UID
+                        && appInfo.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                    if (appInfo.pkgList != null && (appInfo.pkgList.length > 0)) {
+                        for (String pkg : appInfo.pkgList) {
+                            if (!pkg.equals("com.android.systemui") && !pkg.equals(defaultHomePackage)) {
+                                am.forceStopPackage(pkg);
+                                targetKilled = true;
+                                break;
+                            }
+                        }
+                    } else {
+                        Process.killProcess(appInfo.pid);
+                        targetKilled = true;
+                    }
+                }
+                if (targetKilled) {
+                    Toast.makeText(mContext, R.string.app_killed_message, Toast.LENGTH_SHORT).show();
+                    break;
+                }
+            }
+        }
+    };
+
+    final Runnable mScreenshotTimeout = new Runnable() {
+        @Override
+        public void run() {
+            synchronized (mScreenshotLock) {
+                if (mScreenshotConnection != null) {
+                    mContext.unbindService(mScreenshotConnection);
+                    mScreenshotConnection = null;
+                }
+            }
+        }
+    };
+
+    private void takeScreenshot() {
+        synchronized (mScreenshotLock) {
+            if (mScreenshotConnection != null) {
+                return;
+            }
+            ComponentName cn = new ComponentName("com.android.systemui",
+                    "com.android.systemui.screenshot.TakeScreenshotService");
+            Intent intent = new Intent();
+            intent.setComponent(cn);
+            ServiceConnection conn = new ServiceConnection() {
+                @Override
+                public void onServiceConnected(ComponentName name, IBinder service) {
+                    synchronized (mScreenshotLock) {
+                        if (mScreenshotConnection != this) {
+                            return;
+                        }
+                        Messenger messenger = new Messenger(service);
+                        Message msg = Message.obtain(null, 1);
+                        final ServiceConnection myConn = this;
+                        Handler h = new Handler(HDL.getLooper()) {
+                            @Override
+                            public void handleMessage(Message msg) {
+                                synchronized (mScreenshotLock) {
+                                    if (mScreenshotConnection == myConn) {
+                                        mContext.unbindService(mScreenshotConnection);
+                                        mScreenshotConnection = null;
+                                        HDL.removeCallbacks(mScreenshotTimeout);
+                                    }
+                                }
+                            }
+                        };
+                        msg.replyTo = new Messenger(h);
+                        msg.arg1 = msg.arg2 = 0;
+
+                        /*
+* remove for the time being if (mStatusBar != null &&
+* mStatusBar.isVisibleLw()) msg.arg1 = 1; if
+* (mNavigationBar != null &&
+* mNavigationBar.isVisibleLw()) msg.arg2 = 1;
+*/
+
+                        /* wait for the dialog box to close */
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException ie) {
+                        }
+
+                        /* take the screenshot */
+                        try {
+                            messenger.send(msg);
+                        } catch (RemoteException e) {
+                        }
+                    }
+                }
+
+                @Override
+                public void onServiceDisconnected(ComponentName name) {
+                }
+            };
+            if (mContext.bindService(intent, conn, mContext.BIND_AUTO_CREATE)) {
+                mScreenshotConnection = conn;
+                HDL.postDelayed(mScreenshotTimeout, 10000);
+            }
+        }
+    }
+
+    private void toggleLastApp() {
+        int lastAppId = 0;
+        int looper = 1;
+        String packageName;
+        final Intent intent = new Intent(Intent.ACTION_MAIN);
+        final ActivityManager am = (ActivityManager) mContext
+                .getSystemService(Activity.ACTIVITY_SERVICE);
+        String defaultHomePackage = "com.android.launcher";
+        intent.addCategory(Intent.CATEGORY_HOME);
+        final ResolveInfo res = mContext.getPackageManager().resolveActivity(intent, 0);
+        if (res.activityInfo != null && !res.activityInfo.packageName.equals("android")) {
+            defaultHomePackage = res.activityInfo.packageName;
+        }
+        List <ActivityManager.RunningTaskInfo> tasks = am.getRunningTasks(5);
+        // lets get enough tasks to find something to switch to
+        // Note, we'll only get as many as the system currently has - up to 5
+        while ((lastAppId == 0) && (looper < tasks.size())) {
+            packageName = tasks.get(looper).topActivity.getPackageName();
+            if (!packageName.equals(defaultHomePackage) && !packageName.equals("com.android.systemui")) {
+                lastAppId = tasks.get(looper).id;
+            }
+            looper++;
+        }
+        if (lastAppId != 0) {
+            am.moveTaskToFront(lastAppId, am.MOVE_TASK_NO_USER_ACTION);
+        }
+    }
+
+    private Handler HDL = new Handler() {
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+
+            }
+        }
+    };
+
 }

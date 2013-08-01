@@ -598,7 +598,6 @@ bool BootAnimation::movie()
                 }
 
                 checkExit();
-
                 if (noTextureCache)
                     glDeleteTextures(1, &frame.tid);
             }

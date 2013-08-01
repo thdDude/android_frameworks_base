@@ -27,6 +27,8 @@ public class QSConstants {
         public static final String TILE_NFC = "toggleNfc";
         public static final String TILE_USBTETHER = "toggleUsbTether";
         public static final String TILE_QUIETHOURS = "toggleQuietHours";
+        public static final String TILE_DAYDREAM = "toggleDaydream";
+	public static final String TILE_FCHARGE = "toggleFCharge";
         public static final String TILE_VOLUME = "toggleVolume";
         public static final String TILE_EXPANDEDDESKTOP = "toggleExpandedDesktop";
         public static final String TILE_CAMERA = "toggleCamera";

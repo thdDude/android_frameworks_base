@@ -23,7 +23,9 @@ import static com.android.internal.util.cm.QSConstants.TILE_BATTERY;
 import static com.android.internal.util.cm.QSConstants.TILE_BLUETOOTH;
 import static com.android.internal.util.cm.QSConstants.TILE_BRIGHTNESS;
 import static com.android.internal.util.cm.QSConstants.TILE_CAMERA;
+import static com.android.internal.util.cm.QSConstants.TILE_DAYDREAM;
 import static com.android.internal.util.cm.QSConstants.TILE_DELIMITER;
+import static com.android.internal.util.cm.QSConstants.TILE_FCHARGE;
 import static com.android.internal.util.cm.QSConstants.TILE_EXPANDEDDESKTOP;
 import static com.android.internal.util.cm.QSConstants.TILE_GPS;
 import static com.android.internal.util.cm.QSConstants.TILE_LOCKSCREEN;
@@ -69,8 +71,10 @@ import com.android.systemui.quicksettings.BluetoothTile;
 import com.android.systemui.quicksettings.BrightnessTile;
 import com.android.systemui.quicksettings.BugReportTile;
 import com.android.systemui.quicksettings.CameraTile;
+import com.android.systemui.quicksettings.DaydreamTile;
 import com.android.systemui.quicksettings.DockBatteryTile;
 import com.android.systemui.quicksettings.ExpandedDesktopTile;
+import com.android.systemui.quicksettings.FChargeTile;
 import com.android.systemui.quicksettings.GPSTile;
 import com.android.systemui.quicksettings.InputMethodTile;
 import com.android.systemui.quicksettings.LteTile;
@@ -234,6 +238,10 @@ public class QuickSettingsController {
                 // Not available yet
             } else if (tile.equals(TILE_LTE)) {
                 qs = new LteTile(mContext, this);
+            } else if (tile.equals(TILE_DAYDREAM)) {
+                qs = new DaydreamTile(mContext, this);
+            } else if (tile.equals(TILE_FCHARGE)) {
+                qs = new FChargeTile(mContext, this, mHandler);
             } else if (tile.equals(TILE_QUIETHOURS)) {
                 qs = new QuietHoursTile(mContext, this);
             } else if (tile.equals(TILE_VOLUME)) {

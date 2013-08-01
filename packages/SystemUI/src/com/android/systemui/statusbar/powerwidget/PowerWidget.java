@@ -38,12 +38,13 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
-
+import android.util.DisplayMetrics;
 import com.android.systemui.R;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PowerWidget extends FrameLayout {
     private static final String TAG = "PowerWidget";
@@ -87,6 +88,7 @@ public class PowerWidget extends FrameLayout {
         sPossibleButtons.put(PowerButton.BUTTON_AUTOROTATE, AutoRotateButton.class);
         sPossibleButtons.put(PowerButton.BUTTON_AIRPLANE, AirplaneButton.class);
         sPossibleButtons.put(PowerButton.BUTTON_FLASHLIGHT, FlashlightButton.class);
+        sPossibleButtons.put(PowerButton.BUTTON_FCHARGE, FChargeButton.class);
         sPossibleButtons.put(PowerButton.BUTTON_SLEEP, SleepButton.class);
         sPossibleButtons.put(PowerButton.BUTTON_MEDIA_PLAY_PAUSE, MediaPlayPauseButton.class);
         sPossibleButtons.put(PowerButton.BUTTON_MEDIA_PREVIOUS, MediaPreviousButton.class);
@@ -468,6 +470,19 @@ public class PowerWidget extends FrameLayout {
         public void observe() {
             ContentResolver resolver = mContext.getContentResolver();
 
+	    // watch for color change
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TOGGLE_ICON_ON_COLOR), false, this);
+
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TOGGLE_ICON_OFF_COLOR), false, this);
+
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                  Settings.System.ENABLE_TOGGLE_COLORS), false, this);
+
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                  Settings.System.ENABLE_TOGGLE_BAR), false, this);
+
             // watch for display widget
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.EXPANDED_VIEW_WIDGET),
@@ -508,8 +523,12 @@ public class PowerWidget extends FrameLayout {
             ContentResolver resolver = mContext.getContentResolver();
             Resources res = mContext.getResources();
 
-            // first check if our widget buttons have changed
-            if(uri.equals(Settings.System.getUriFor(Settings.System.WIDGET_BUTTONS))) {
+            // first check if our widget buttons or its color have changed
+            if(uri.equals(Settings.System.getUriFor(Settings.System.WIDGET_BUTTONS))
+                    || uri.equals(Settings.System.getUriFor(Settings.System.TOGGLE_ICON_ON_COLOR))
+                    || uri.equals(Settings.System.getUriFor(Settings.System.TOGGLE_ICON_OFF_COLOR))
+                    || uri.equals(Settings.System.getUriFor(Settings.System.ENABLE_TOGGLE_COLORS))
+                    || uri.equals(Settings.System.getUriFor(Settings.System.ENABLE_TOGGLE_BAR))) {
                 setupWidget();
             // now check if we change visibility
             } else if(uri.equals(Settings.System.getUriFor(Settings.System.EXPANDED_VIEW_WIDGET))) {

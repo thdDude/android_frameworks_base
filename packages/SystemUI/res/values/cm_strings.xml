@@ -53,6 +53,7 @@
     <string name="quick_settings_torch_off">Torch off</string>
     <string name="quick_settings_nfc">NFC</string>
     <string name="quick_settings_nfc_off">NFC off</string>
+    <string name="quick_settings_fcharge">Fast charge</string>
     <string name="quick_settings_screen_timeout">Timeout</string>
     <string name="quick_settings_screen_timeout_summary" translatable="false">%1$d %2$s</string>
     <string name="quick_settings_usb_tether_off_label">Disconnected</string>
@@ -60,6 +61,7 @@
     <string name="quick_settings_usb_tether_on_label">Tethering</string>
     <string name="quick_settings_wifiap">Wi-Fi AP</string>
     <string name="quick_settings_wifiap_off">Wi-Fi AP off</string>
+    <string name="quick_settings_daydream">Daydream</string>
     <string name="quick_settings_quiethours">Quiet hours</string>
     <string name="quick_settings_quiethours_off">Quiet hours off</string>
     <string name="quick_settings_lte">LTE</string>
@@ -79,24 +81,34 @@
         <xliff:g id="number">%d</xliff:g>
     </string>
 
-    <!-- Dialog title for navigation bar button selection -->
-    <string name="navbar_dialog_title">Choose action to assign</string>
-    <string name="navbar_home_button">Home button</string>
-    <string name="navbar_recent_button">Recent button</string>
-    <string name="navbar_search_button">Search button</string>
-    <string name="navbar_back_button">Back button</string>
-    <string name="navbar_empty_button">Empty button</string>
-    <string name="navbar_menu_conditional_button">Menu (autoHide) button</string>
-    <string name="navbar_menu_always_button">Menu (alwaysShow) button</string>
-    <string name="navbar_menu_big_button">Menu button</string>
+	    <!--  Target/Action Strings -->
+    <string name="action_home">Home</string>
+    <string name="action_back">Back</string>
+    <string name="action_recents">Recents</string>
+    <string name="action_screenshot">Screenshot</string>
+    <string name="action_menu">Menu</string>
+    <string name="action_ime">Open IME Switcher</string>
+    <string name="action_kill">Kill task</string>
+    <string name="action_power">Power</string>
+    <string name="action_notifications">Notifications</string>
+    <string name="action_lastapp">Last App</string>
+    <string name="action_none">Empty</string>
 
-    <!-- Battery status in pie controls -->
-    <string name="pie_battery_status_charging">Charging (<xliff:g id="percent">%d</xliff:g>%%)</string>
-    <string name="pie_battery_status_full">Charged</string>
-    <string name="pie_battery_status_discharging"><xliff:g id="percent">%d</xliff:g>%% remaining</string>
+    <string name="toggle_ring_vib">Ring/Vib - Toggle</string>
+    <string name="toggle_ring_silent">Ring/Silent - Toggle</string>
+    <string name="toggle_ring_vib_silent">Ring/Vib/Silent - Toggle</string>
+    <string name="toggle_widgets">Widgets - Toggle</string>
+    <string name="widgets">Widgets</string>
+    <string name="app_killed_message">App Killed</string>
 
-    <!-- Phone status in pie controls -->
-    <string name="pie_phone_status_no_service">No service</string>
-    <string name="pie_phone_status_airplane_mode">Airplane mode on</string>
-    <string name="pie_phone_status_emergency_only">Emergency calls only</string>
+    <string name="recents_task_manager_button_text">Task Manager</string>
+   
+    <!-- App sidebar -->
+    <string name="default_folder_text">Folder</string>
+    <string name="title_activity_sidebar_configuration">Appbar content setup</string>
+    <string name="action_save">Save</string>
+    <string name="toast_items_saved">Appbar items have been saved.</string>
+    <string name="content_setup_instructions">Add items to the Appbar by long pressing any item on the right and drag it over to the Appbar.\n\nCombine items into folders by droping an item onto any existing item in the \@ppbar.\n\nTo remove an item simply drag it out of the \@appbar.</string>
+    <string name="content_setup_dismiss">Continue</string>
+
 </resources>

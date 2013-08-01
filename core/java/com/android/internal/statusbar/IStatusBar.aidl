@@ -35,6 +35,8 @@ oneway interface IStatusBar
     void topAppWindowChanged(boolean menuVisible);
     void setImeWindowStatus(in IBinder token, int vis, int backDisposition);
     void setHardKeyboardStatus(boolean available, boolean enabled);
+    void toggleNotificationShade();
+    void toggleWidgets();
     void toggleRecentApps();
     void preloadRecentApps();
     void cancelPreloadRecentApps();

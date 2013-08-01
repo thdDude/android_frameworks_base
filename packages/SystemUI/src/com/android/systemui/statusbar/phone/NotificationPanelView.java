@@ -138,6 +138,7 @@ public class NotificationPanelView extends PanelView {
                         // Pointer is at the handle portion of the view?
                         mGestureStartY > getHeight() - mHandleBarHeight - getPaddingBottom();
                     mOkToFlip = getExpandedHeight() == 0;
+
                     if (event.getX(0) > getWidth() * (1.0f - STATUS_BAR_SETTINGS_RIGHT_PERCENTAGE) &&
                             Settings.System.getIntForUser(getContext().getContentResolver(),
                                     Settings.System.QS_QUICK_PULLDOWN, 0, UserHandle.USER_CURRENT) == 1) {
@@ -145,6 +146,10 @@ public class NotificationPanelView extends PanelView {
                     } else if (event.getX(0) < getWidth() * (1.0f - STATUS_BAR_SETTINGS_LEFT_PERCENTAGE) &&
                             Settings.System.getIntForUser(getContext().getContentResolver(),
                                     Settings.System.QS_QUICK_PULLDOWN, 0, UserHandle.USER_CURRENT) == 2) {
+                        flip = true;
+                    } else if (mStatusBar.skipToSettingsPanel() &&
+			    Settings.System.getInt(getContext().getContentResolver(),
+                                    Settings.System.QS_QUICK_PULLDOWN, 0) == 3) {
                         flip = true;
                     }
                     break;

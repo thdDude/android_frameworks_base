@@ -89,7 +89,7 @@ public class DateView extends TextView implements OnClickListener, OnLongClickLi
         setUpdates();
     }
 
-    @Override
+    /*@Override
     protected void onDraw(Canvas canvas) {
         if (mParent == null) {
             mParent = (RelativeLayout) getParent();
@@ -98,7 +98,7 @@ public class DateView extends TextView implements OnClickListener, OnLongClickLi
         }
 
         super.onDraw(canvas);
-    }
+    }*/
 
     @Override
     protected void onWindowVisibilityChanged(int visibility) {

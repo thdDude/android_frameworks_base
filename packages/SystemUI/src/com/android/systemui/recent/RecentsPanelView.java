@@ -19,6 +19,7 @@ package com.android.systemui.recent;
 import android.animation.Animator;
 import android.animation.LayoutTransition;
 import android.animation.TimeInterpolator;
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManagerNative;
 import android.app.ActivityOptions;
@@ -53,11 +54,13 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.content.pm.PackageManager;
 
 import com.android.systemui.R;
 import com.android.systemui.statusbar.BaseStatusBar;
@@ -85,13 +88,14 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
     private long mWindowAnimationStartTime;
     private boolean mCallUiHiddenBeforeNextReload;
 
+    private Button mRecentsTaskManagerButton;
+
     private RecentTasksLoader mRecentTasksLoader;
     private ArrayList<TaskDescription> mRecentTaskDescriptions;
     private TaskDescriptionAdapter mListAdapter;
     private int mThumbnailWidth;
     private boolean mFitThumbnailToXY;
     private int mRecentItemLayoutId;
-    private boolean mHighEndGfx;
     private ImageView mClearRecents;
 
     public static interface RecentsScrollView {
@@ -477,14 +481,30 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
         }
 
         if (mRecentsScrim != null) {
-            mHighEndGfx = ActivityManager.isHighEndGfx();
-            if (!mHighEndGfx) {
+	    if (!ActivityManager.isHighEndGfx() && !ActivityManager.overwriteHighEndGfx()) {
                 mRecentsScrim.setBackground(null);
             } else if (mRecentsScrim.getBackground() instanceof BitmapDrawable) {
                 // In order to save space, we make the background texture repeat in the Y direction
                 ((BitmapDrawable) mRecentsScrim.getBackground()).setTileModeY(TileMode.REPEAT);
             }
         }
+
+        mRecentsTaskManagerButton = (Button) findViewById(R.id.recents_task_manager_button);
+        if (mRecentsTaskManagerButton != null){
+	boolean recent_task_manager_button = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.RECENT_TASK_MANAGER_BUTTON, 0) == 1;
+            if (recent_task_manager_button){ //set the listener
+                mRecentsTaskManagerButton.setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        opentaskmanager();
+                    }
+                });
+            } else { // hide the button completely (gone)
+                mRecentsTaskManagerButton.setVisibility(View.GONE);
+            }
+        }
+
     }
 
     public void setMinSwipeAlpha(float minAlpha) {
@@ -805,6 +825,17 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
                     } else {
                         throw new IllegalStateException("Oops, no tag on view " + selectedView);
                     }
+                } else if (item.getItemId() == R.id.recent_launch_floating) {
+                    ViewHolder viewHolder = (ViewHolder) selectedView.getTag();
+                    if (viewHolder != null) {
+                        final TaskDescription ad = viewHolder.taskDescription;
+                        Intent intent = ad.intent;
+                        intent.addFlags(Intent.FLAG_FLOATING_WINDOW
+                                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        dismissAndGoBack();
+                        getContext().startActivityAsUser(intent,
+                                new UserHandle(UserHandle.USER_CURRENT));
+                    }
                 } else {
                     return false;
                 }
@@ -818,5 +849,13 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
             }
         });
         popup.show();
+    }
+
+    private void opentaskmanager() {
+        Intent manageApps = new Intent(Settings.ACTION_MANAGE_ALL_APPLICATIONS_SETTINGS);
+        manageApps.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+      setVisibility(INVISIBLE);
+          getContext().startActivity(manageApps);
     }
 }

@@ -78,6 +78,19 @@ public class TabletTicker
     private LayoutTransition mLayoutTransition;
     private boolean mWindowShouldClose;
 
+    private TabletTickerCallback mEvent;
+    private boolean mDisabled = false;
+
+    public interface TabletTickerCallback  
+    {  
+        public void updateTicker(StatusBarNotification notification);
+        public void updateTicker(StatusBarNotification notification, String text);
+    }  
+
+    public void setUpdateEvent(TabletTickerCallback event) {
+        mEvent = event;
+    }
+
     public TabletTicker(TabletStatusBar bar) {
         mBar = bar;
         mContext = bar.getContext();
@@ -107,6 +120,10 @@ public class TabletTicker
         if (mQueuePos < QUEUE_LENGTH - 1) {
             mQueuePos++;
         }
+
+        if (mEvent != null && notification != null && notification.notification.tickerText != null) {
+            mEvent.updateTicker(notification, notification.notification.tickerText.toString());
+        }
     }
 
     public void remove(IBinder key) {
@@ -114,6 +131,9 @@ public class TabletTicker
     }
 
     public void remove(IBinder key, boolean advance) {
+        if (mEvent != null) {
+            mEvent.updateTicker(null);
+        }
         if (mCurrentKey == key) {
             // Showing now
             if (advance) {
@@ -159,11 +179,19 @@ public class TabletTicker
         }
     }
 
+    public void setDisabled(boolean disabled) {
+        mDisabled = disabled;
+    }
+
     private void advance() {
+        if (mDisabled) return;
         // Out with the old...
         if (mCurrentView != null) {
             if (mWindow != null) {
                 mWindow.removeView(mCurrentView);
+                mWindowManager.removeView(mWindow);
+                mWindow = null;
+                mBar.doneTicking();
             }
             mCurrentView = null;
             mCurrentKey = null;
@@ -215,6 +243,7 @@ public class TabletTicker
         final int width = res.getDimensionPixelSize(R.dimen.notification_ticker_width);
         int windowFlags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                     | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
                     | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
         if (CLICKABLE_TICKER) {
             windowFlags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;

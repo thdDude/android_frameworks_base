@@ -232,6 +232,7 @@ public class NetworkController extends BroadcastReceiver {
 
         // broadcasts
         IntentFilter filter = new IntentFilter();
+        filter.addAction("com.aokp.romcontrol.LABEL_CHANGED");
         filter.addAction(WifiManager.RSSI_CHANGED_ACTION);
         filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
@@ -410,6 +411,8 @@ public class NetworkController extends BroadcastReceiver {
         } else if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION) ||
                  action.equals(ConnectivityManager.INET_CONDITION_ACTION)) {
             updateConnectivity(intent);
+            refreshViews();
+        } else if (action.equals("com.aokp.romcontrol.LABEL_CHANGED")) {
             refreshViews();
         } else if (action.equals(Intent.ACTION_CONFIGURATION_CHANGED)) {
             refreshLocale();
@@ -1041,6 +1044,8 @@ public class NetworkController extends BroadcastReceiver {
         String mobileLabel = "";
         int N;
         final boolean emergencyOnly = isEmergencyOnly();
+        final String customLabel = Settings.System.getString(mContext.getContentResolver(),
+                Settings.System.CUSTOM_CARRIER_LABEL);
 
         if (!mHasMobileDataFeature) {
             mDataSignalIconId = mPhoneSignalIconId = 0;
@@ -1153,7 +1158,12 @@ public class NetworkController extends BroadcastReceiver {
             // look again; your radios are now airplanes
             mContentDescriptionPhoneSignal = mContext.getString(
                     R.string.accessibility_airplane_mode);
-            mAirplaneIconId = R.drawable.stat_sys_signal_flightmode;
+            if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.PIE_DISABLE_STATUSBAR_INFO, 0) == 0) {
+                mAirplaneIconId = R.drawable.stat_sys_signal_flightmode;
+            } else {
+                mAirplaneIconId = 0;
+            }
             mPhoneSignalIconId = mDataSignalIconId = mDataTypeIconId = mQSDataTypeIconId = 0;
             mQSPhoneSignalIconId = 0;
 
@@ -1194,6 +1204,12 @@ public class NetworkController extends BroadcastReceiver {
                 mDataTypeIconId = R.drawable.stat_sys_data_connected_roam;
                 mQSDataTypeIconId = R.drawable.ic_qs_signal_r;
             }
+        }
+
+        if (customLabel != null && customLabel.length() > 0) {	
+            combinedLabel = customLabel;	
+            mobileLabel = customLabel;	
+            wifiLabel = customLabel;	
         }
 
         if (DEBUG) {

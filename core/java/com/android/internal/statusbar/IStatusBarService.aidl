@@ -48,6 +48,8 @@ interface IStatusBarService
     void onNotificationClear(String pkg, String tag, int id);
     void setSystemUiVisibility(int vis, int mask);
     void setHardKeyboardEnabled(boolean enabled);
+    void toggleNotificationShade();
+    void toggleWidgets();
     void toggleRecentApps();
     void preloadRecentApps();
     void cancelPreloadRecentApps();

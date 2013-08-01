@@ -88,8 +88,12 @@ public class CircleBattery extends ImageView implements BatteryController.Batter
         public void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_BATTERY), false, this);
-            onChange(true);
+                    Settings.System.STATUS_BAR_BATTERY),
+                    false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PIE_DISABLE_STATUSBAR_INFO),
+                    false, this);
+	    onChange(true);
         }
 
         public void unobserve() {

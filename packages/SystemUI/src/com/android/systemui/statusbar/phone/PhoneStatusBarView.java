@@ -27,10 +27,9 @@ import android.util.Slog;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
-
-import com.android.internal.util.pie.PiePosition;
 import com.android.systemui.EventLogTags;
 import com.android.systemui.R;
+import com.android.systemui.statusbar.policy.PieController.Position;
 
 public class PhoneStatusBarView extends PanelBar {
     private static final String TAG = "PhoneStatusBarView";
@@ -173,10 +172,8 @@ public class PhoneStatusBarView extends PanelBar {
         mLastFullyOpenedPanel = null;
 
         // show up you pie controls
-        mBar.updatePieTriggerMask(PiePosition.LEFT.FLAG
-                | PiePosition.TOP.FLAG
-                | PiePosition.RIGHT.FLAG
-                | PiePosition.BOTTOM.FLAG);
+        mBar.setupTriggers(false);
+
     }
 
     @Override
@@ -187,11 +184,7 @@ public class PhoneStatusBarView extends PanelBar {
         }
 
         // back off you pie controls!
-        if (mShouldFade) {
-            mBar.updatePieTriggerMask(PiePosition.LEFT.FLAG
-                    | PiePosition.RIGHT.FLAG
-                    | PiePosition.TOP.FLAG);
-        }
+        mBar.setupTriggers(true);
 
         mFadingPanel = openPanel;
         mLastFullyOpenedPanel = openPanel;
@@ -226,7 +219,8 @@ public class PhoneStatusBarView extends PanelBar {
             Slog.v(TAG, "panelExpansionChanged: f=" + frac);
         }
 
-        if (panel == mFadingPanel && mScrimColor != 0 && ActivityManager.isHighEndGfx()) {
+        if (panel == mFadingPanel && mScrimColor != 0 && 
+	(ActivityManager.isHighEndGfx() || ActivityManager.overwriteHighEndGfx())) {
             if (mShouldFade) {
                 frac = mPanelExpandedFractionSum; // don't judge me
                 // let's start this 20% of the way down the screen

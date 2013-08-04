@@ -3664,6 +3664,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         if (pkgs != null) {
             int i = 0;
             for (PackageParser.Package pkg : pkgs) {
+                PackageParser.Package p = pkg;
                 if (!isFirstBoot()) {
                     i++;
                     try {
@@ -3682,7 +3683,6 @@ public class PackageManagerService extends IPackageManager.Stub {
                     } catch (RemoteException e) {
                     }
                 }
-                PackageParser.Package p = pkg;
                 synchronized (mInstallLock) {
                     if (!p.mDidDexOpt) {
                         performDexOptLI(p, false, false, true);

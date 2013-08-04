@@ -104,6 +104,8 @@ public class SearchPanelView extends FrameLayout implements
     private static final int SEARCH_PANEL_HOLD_DURATION = 0;
     static final String TAG = "SearchPanelView";
     static final boolean DEBUG = TabletStatusBar.DEBUG || PhoneStatusBar.DEBUG || false;
+    private static final String ASSIST_ICON_METADATA_NAME =
+            "com.android.systemui.action_assist_icon";
     public static final boolean DEBUG_GESTURES = true;
     private final Context mContext;
     private BaseStatusBar mBar;
@@ -403,7 +405,7 @@ public class SearchPanelView extends FrameLayout implements
 
     private void maybeSwapSearchIcon() {
         Intent intent = ((SearchManager) mContext.getSystemService(Context.SEARCH_SERVICE))
-                .getAssistIntent(mContext, UserHandle.USER_CURRENT);
+                .getAssistIntent(mContext, false, UserHandle.USER_CURRENT);
         if (intent != null) {
             ComponentName component = intent.getComponent();
             if (component == null || !mGlowPadView.replaceTargetDrawablesIfPresent(component,

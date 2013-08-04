@@ -246,7 +246,7 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
         mBackIcon = res.getDrawable(R.drawable.ic_sysbar_back);
         mBackLandIcon = res.getDrawable(R.drawable.ic_sysbar_back_land);
         mBackAltIcon = res.getDrawable(R.drawable.ic_sysbar_back_ime);
-        mBackAltLandIcon = res.getDrawable(R.drawable.ic_sysbar_back_ime_land);
+        mBackAltLandIcon = res.getDrawable(R.drawable.ic_sysbar_back_ime);
         mRecentIcon = res.getDrawable(R.drawable.ic_sysbar_recent);
         mRecentLandIcon = res.getDrawable(R.drawable.ic_sysbar_recent_land);
     }
@@ -468,8 +468,6 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
 
     @Override
     public void setLayoutDirection(int layoutDirection) {
-        updateResources();
-
         super.setLayoutDirection(layoutDirection);
     }
 
@@ -1007,6 +1005,53 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
             default:
                 return "VISIBLE";
         }
+    }
+
+public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
+        pw.println("NavigationBarView {");
+        final Rect r = new Rect();
+        final Point size = new Point();
+        mDisplay.getRealSize(size);
+
+        pw.println(String.format("      this: " + PhoneStatusBar.viewInfo(this)
+                        + " " + visibilityToString(getVisibility())));
+
+        getWindowVisibleDisplayFrame(r);
+        final boolean offscreen = r.right > size.x || r.bottom > size.y;
+        pw.println("      window: " 
+                + r.toShortString()
+                + " " + visibilityToString(getWindowVisibility())
+                + (offscreen ? " OFFSCREEN!" : ""));
+
+        pw.println(String.format("      mCurrentView: id=%s (%dx%d) %s",
+                        getResourceName(mCurrentView.getId()),
+                        mCurrentView.getWidth(), mCurrentView.getHeight(),
+                        visibilityToString(mCurrentView.getVisibility())));
+
+        pw.println(String.format("      disabled=0x%08x vertical=%s hidden=%s low=%s menu=%s",
+                        mDisabledFlags,
+                        mVertical ? "true" : "false",
+                        mHidden ? "true" : "false",
+                        mLowProfile ? "true" : "false",
+                        mShowMenu ? "true" : "false"));
+
+        final View back = getBackButton();
+        final View home = getHomeButton();
+        final View recent = getRecentsButton();
+
+        pw.println("      back: "
+                + PhoneStatusBar.viewInfo(back)
+                + " " + visibilityToString(back.getVisibility())
+                );
+        pw.println("      home: "
+                + PhoneStatusBar.viewInfo(home)
+                + " " + visibilityToString(home.getVisibility())
+                );
+        pw.println("      rcnt: "
+                + PhoneStatusBar.viewInfo(recent)
+                + " " + visibilityToString(recent.getVisibility())
+                );
+        pw.println("    }");
     }
 
     private void updateColor() {

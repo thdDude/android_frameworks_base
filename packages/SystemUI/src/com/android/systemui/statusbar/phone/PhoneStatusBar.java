@@ -124,6 +124,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     static final String TAG = "PhoneStatusBar";
     public static final boolean DEBUG = BaseStatusBar.DEBUG;
     public static final boolean SPEW = DEBUG;
+    public static final boolean DUMPTRUCK = true; // extra dumpsys info
     public static final boolean DEBUG_GESTURES = false;
 
     public static final boolean DEBUG_CLINGS = false;
@@ -3137,7 +3138,7 @@ public class PhoneStatusBar extends BaseStatusBar {
             if(ent != null
                     && ent.notification != null
                     && notificationIsForCurrentUser(ent.notification)) {
-                switch(ent.notification.id) {
+                switch(ent.notification.getId()) {
                     // ignore adb icon
                     case com.android.internal.R.drawable.stat_sys_adb:
                         continue;

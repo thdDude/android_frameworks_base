@@ -121,8 +121,8 @@ public class TabletTicker
             mQueuePos++;
         }
 
-        if (mEvent != null && notification != null && notification.notification.tickerText != null) {
-            mEvent.updateTicker(notification, notification.notification.tickerText.toString());
+        if (mEvent != null && notification != null && notification.getNotification().tickerText != null) {
+            mEvent.updateTicker(notification, notification.getNotification().tickerText.toString());
         }
     }
 

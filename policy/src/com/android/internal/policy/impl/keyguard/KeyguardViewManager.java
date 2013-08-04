@@ -426,6 +426,7 @@ public class KeyguardViewManager {
 
         boolean allowSeeThrough = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.LOCKSCREEN_SEE_THROUGH, 0) != 0;
+	boolean enableScreenRotation = shouldEnableScreenRotation();
 
             int flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                     | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR

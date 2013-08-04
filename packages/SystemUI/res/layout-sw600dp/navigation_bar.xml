@@ -60,6 +60,7 @@
             android:animateLayoutChanges="true"
             >
 
+
             <!-- navigation controls -->
             <View
                 android:layout_width="48dp"
@@ -123,12 +124,25 @@
             android:layout_height="match_parent"
             android:layout_width="match_parent"
             android:orientation="horizontal"
+
+
             android:id="@+id/lights_out"
             android:visibility="gone"
             >
+
             <Space 
                 android:layout_width="match_parent"
+
+
+
+
                 android:layout_height="match_parent"
+
+                android:layout_weight="1" />
+			<!-- lights out layout to match exactly -->
+            <LinearLayout
+                android:layout_height="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_weight="1"
                 android:orientation="horizontal"
                 android:gravity="center_horizontal"
@@ -230,11 +244,14 @@
             android:layout_height="match_parent"
             android:layout_width="match_parent"
             android:orientation="horizontal"
+
+
             android:clipChildren="false"
             android:clipToPadding="false"
             android:id="@+id/nav_buttons"
             android:animateLayoutChanges="true"
             >
+
 
             <!-- navigation controls -->
             <View
@@ -299,13 +316,21 @@
             android:layout_height="match_parent"
             android:layout_width="match_parent"
             android:orientation="horizontal"
+
+
             android:id="@+id/lights_out"
             android:visibility="gone"
             >
+
             <Space 
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
+                android:layout_weight="1" />
+
+            <!-- lights out layout to match exactly -->
+            <LinearLayout
+                android:layout_height="match_parent"
+                android:layout_width="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_horizontal"
                 android:layout_gravity="center_horizontal"

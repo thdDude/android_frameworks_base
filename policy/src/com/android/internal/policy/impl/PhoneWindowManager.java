@@ -337,6 +337,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     int mNavigationBarWidth;
     int mPointerLocationMode = 0; // guarded by mLock
     int mDeviceHardwareKeys;
+    boolean mHasHomeKey;
+    boolean mHasMenuKey;
+    boolean mHasAssistKey;
+    boolean mHasAppSwitchKey;
     boolean mHasMenuKeyEnabled;
 
     // The last window we were told about in focusChanged.

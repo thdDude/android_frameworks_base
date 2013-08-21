@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) 2010 The Android Open Source Project
+ * This code has been modified. Portions copyright (C) 2012, ParanoidAndroid Project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,32 +18,13 @@
 
 package com.android.systemui.statusbar;
 
-import android.service.notification.StatusBarNotification;
-import android.content.res.Configuration;
-import com.android.internal.statusbar.IStatusBarService;
-import com.android.internal.statusbar.StatusBarIcon;
-import com.android.internal.statusbar.StatusBarIconList;
-import com.android.internal.widget.SizeAdaptiveLayout;
-import com.android.systemui.R;
-import com.android.systemui.SearchPanelView;
-import com.android.systemui.SystemUI;
-import com.android.systemui.recent.RecentTasksLoader;
-import com.android.systemui.recent.RecentsActivity;
-import com.android.systemui.recent.TaskDescription;
-import com.android.systemui.statusbar.pie.PieLayout;
-import com.android.systemui.statusbar.AppSidebar;
-import com.android.systemui.statusbar.policy.NotificationRowLayout;
-import com.android.systemui.statusbar.policy.PieController;
-import com.android.systemui.statusbar.policy.PieController.Position;
-import com.android.systemui.statusbar.tablet.StatusBarPanel;
-import com.android.systemui.statusbar.WidgetView;
-
 import android.app.ActivityManager;
 import android.app.ActivityManagerNative;
 import android.app.ActivityOptions;
 import android.app.KeyguardManager;
 import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
+import android.app.Notification;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
@@ -85,12 +67,36 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
 import android.view.WindowManagerGlobal;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.RemoteViews;
 import android.widget.TextView;
+import android.service.notification.StatusBarNotification;
 
+import com.android.internal.statusbar.IStatusBarService;
+import com.android.internal.statusbar.StatusBarIcon;
+import com.android.internal.statusbar.StatusBarIconList;
+import com.android.internal.widget.SizeAdaptiveLayout;
+import com.android.systemui.R;
+import com.android.systemui.SearchPanelView;
+import com.android.systemui.SystemUI;
+import com.android.systemui.recent.RecentTasksLoader;
+import com.android.systemui.recent.RecentsActivity;
+import com.android.systemui.recent.TaskDescription;
+import com.android.systemui.statusbar.halo.Halo;
+import com.android.systemui.statusbar.phone.QuickSettingsContainerView;
+import com.android.systemui.statusbar.phone.Ticker;
+import com.android.systemui.statusbar.policy.BatteryController;
+import com.android.systemui.statusbar.policy.Clock;
+import com.android.systemui.statusbar.policy.NetworkController;
+import com.android.systemui.statusbar.policy.NotificationRowLayout;
+import com.android.systemui.statusbar.policy.PieController;
+import com.android.systemui.statusbar.tablet.StatusBarPanel;
+import com.android.systemui.statusbar.tablet.TabletTicker;
+
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -155,6 +161,14 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     protected FrameLayout mStatusBarContainer;
 
+    // Halo
+    protected Halo mHalo = null;
+    protected TabletTicker mTabletTicker;
+    protected Ticker mTicker;
+    protected boolean mHaloActive;
+    protected boolean mHaloTaskerActive = false;
+    protected ImageView mHaloButton;
+    protected boolean mHaloButtonVisible = true;
 
     private Runnable mPanelCollapseRunnable = new Runnable() {
         @Override
@@ -298,6 +312,22 @@ public abstract class BaseStatusBar extends SystemUI implements
     protected AppSidebar mAppSidebar;
     protected int mSidebarPosition;
 
+    public Ticker getTicker() {
+        return mTicker;
+    }
+
+    public TabletTicker getTabletTicker() {
+        return mTabletTicker;
+    }
+
+    public NotificationData getNotificationData() {
+        return mNotificationData;
+    }
+
+    public NotificationRowLayout getNotificationRowLayout() {
+        return mPile;
+    }
+
     public IStatusBarService getStatusBarService() {
         return mBarService;
     }
@@ -351,8 +381,6 @@ public abstract class BaseStatusBar extends SystemUI implements
     };
 
     public void start() {
-        SettingsObserver observer = new SettingsObserver(mHandler);
-        observer.observe(mContext);
 
         mWindowManager = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
         mWindowManagerService = WindowManagerGlobal.getWindowManagerService();
@@ -402,6 +430,9 @@ public abstract class BaseStatusBar extends SystemUI implements
         } catch (RemoteException ex) {
             // If the system process isn't there we're doomed anyway.
         }
+
+        mHaloActive = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.HALO_ACTIVE, 0, UserHandle.USER_CURRENT) == 1;
 
         createAndAddWindows();
         mWidgetView = new WidgetView(mContext,null);
@@ -486,6 +517,75 @@ public abstract class BaseStatusBar extends SystemUI implements
             public void onChange(boolean selfChange) {
                 updateAutoCollapseBehaviour();
             }}, UserHandle.USER_ALL);
+
+
+        // Listen for HALO state
+        mContext.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.HALO_ACTIVE), false, new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                updateHalo();
+            }});
+
+        mContext.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.HALO_SIZE), false, new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {                
+                restartHalo();
+            }});
+
+        updateHalo();
+
+        SettingsObserver observer = new SettingsObserver(mHandler);
+        observer.observe(mContext);
+    }
+
+    public void setHaloTaskerActive(boolean haloTaskerActive, boolean updateNotificationIcons) {
+        mHaloTaskerActive = haloTaskerActive;
+        if (updateNotificationIcons) {
+            updateNotificationIcons();
+        }
+    }
+
+    protected void updateHaloButton() {
+        if (mHaloButton != null) {
+            mHaloButton.setVisibility(mHaloButtonVisible && !mHaloActive ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    protected void restartHalo() {
+        if (mHalo != null) {
+            mHalo.cleanUp();
+            mWindowManager.removeView(mHalo);
+            mHalo = null;
+        }
+        updateNotificationIcons();
+        updateHalo();
+    }
+
+    protected void updateHalo() {
+        mHaloActive = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.HALO_ACTIVE, 0, UserHandle.USER_CURRENT) == 1;
+
+        updateHaloButton();
+
+        if (mHaloActive) {
+            if (mHalo == null) {
+                LayoutInflater inflater = (LayoutInflater) mContext
+                        .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                mHalo = (Halo)inflater.inflate(R.layout.halo_trigger, null);
+                mHalo.setLayerType (View.LAYER_TYPE_HARDWARE, null);
+                WindowManager.LayoutParams params = mHalo.getWMParams();
+                mWindowManager.addView(mHalo,params);
+                mHalo.setStatusBar(this);
+            }
+        } else {
+            if (mHalo != null) {
+                mHalo.cleanUp();
+                mWindowManager.removeView(mHalo);
+                mHalo = null;
+            }
+        }
     }
 
     protected void updateAutoCollapseBehaviour() {
@@ -1090,17 +1190,22 @@ public abstract class BaseStatusBar extends SystemUI implements
         return new NotificationClicker(intent, pkg, tag, id);
     }
 
-    private class NotificationClicker implements View.OnClickListener {
-        private PendingIntent mIntent;
-        private String mPkg;
-        private String mTag;
-        private int mId;
+    public class NotificationClicker implements View.OnClickListener {
+        public PendingIntent mIntent;
+        public String mPkg;
+        public String mTag;
+        public int mId;
+        public boolean mFloat;
 
         NotificationClicker(PendingIntent intent, String pkg, String tag, int id) {
             mIntent = intent;
             mPkg = pkg;
             mTag = tag;
             mId = id;
+        }
+
+        public void makeFloating(boolean floating) {
+            mFloat = floating;
         }
 
         public void onClick(View v) {
@@ -1117,9 +1222,17 @@ public abstract class BaseStatusBar extends SystemUI implements
             }
 
             if (mIntent != null) {
+
+                if (mFloat && !"android".equals(mPkg)) {
+                    Intent transparent = new Intent(mContext, com.android.systemui.Transparent.class);
+                    transparent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_FLOATING_WINDOW);
+                    mContext.startActivity(transparent);
+                }
+
                 int[] pos = new int[2];
                 v.getLocationOnScreen(pos);
                 Intent overlay = new Intent();
+                if (mFloat) overlay.addFlags(Intent.FLAG_FLOATING_WINDOW | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 overlay.setSourceBounds(
                         new Rect(pos[0], pos[1], pos[0]+v.getWidth(), pos[1]+v.getHeight()));
                 try {
@@ -1128,6 +1241,10 @@ public abstract class BaseStatusBar extends SystemUI implements
                     // the stack trace isn't very helpful here.  Just log the exception message.
                     Slog.w(TAG, "Sending contentIntent failed: " + e);
                 }
+
+                KeyguardManager kgm =
+                    (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
+                if (kgm != null) kgm.exitKeyguardSecurely(null);
             }
 
             try {
@@ -1193,6 +1310,74 @@ public abstract class BaseStatusBar extends SystemUI implements
         return entry.notification;
     }
 
+    public void prepareHaloNotification(NotificationData.Entry entry, StatusBarNotification notification, boolean update) {
+
+        Notification notif = notification.getNotification();
+
+        // Get the remote view
+        try {
+
+            if (!update) {
+                ViewGroup mainView = (ViewGroup)notif.contentView.apply(mContext, null, mOnClickHandler);
+
+                if (mainView instanceof FrameLayout) {
+                    entry.haloContent = mainView.getChildAt(1);
+                    mainView.removeViewAt(1);
+                } else {
+                    entry.haloContent = mainView;
+                }
+            } else {
+                notif.contentView.reapply(mContext, entry.haloContent, mOnClickHandler);
+            }
+
+        } catch (Exception e) {
+            // Non uniform content?
+            android.util.Log.d("PARANOID", "   Non uniform content?");
+        }
+
+
+        // Construct the round icon
+        final float haloSize = Settings.System.getFloat(mContext.getContentResolver(),
+                Settings.System.HALO_SIZE, 1.0f);
+        int iconSize = (int)(mContext.getResources().getDimensionPixelSize(R.dimen.halo_bubble_size) * haloSize);
+        int smallIconSize = (int)(mContext.getResources().getDimensionPixelSize(R.dimen.status_bar_icon_size) * haloSize);
+        int largeIconWidth = notif.largeIcon != null ? (int)(notif.largeIcon.getWidth() * haloSize) : 0;
+        int largeIconHeight = notif.largeIcon != null ? (int)(notif.largeIcon.getHeight() * haloSize) : 0;
+        Bitmap roundIcon = Bitmap.createBitmap(iconSize, iconSize, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(roundIcon);
+        canvas.drawARGB(0, 0, 0, 0);
+
+        // If we have a bona fide avatar here stretching at least over half the size of our
+        // halo-bubble, we'll use that one and cut it round
+        if (notif.largeIcon != null
+                && largeIconWidth >= iconSize / 2) {
+            Paint smoothingPaint = new Paint();
+            smoothingPaint.setAntiAlias(true);
+            smoothingPaint.setFilterBitmap(true);
+            smoothingPaint.setDither(true);
+            canvas.drawCircle(iconSize / 2, iconSize / 2, iconSize / 2.3f, smoothingPaint);
+            smoothingPaint.setXfermode(new PorterDuffXfermode(Mode.SRC_IN));
+            final int newWidth = iconSize;
+            final int newHeight = iconSize * largeIconWidth / largeIconHeight;
+            Bitmap scaledBitmap = Bitmap.createScaledBitmap(notif.largeIcon, newWidth, newHeight, true);
+            canvas.drawBitmap(scaledBitmap, null, new Rect(0, 0,
+                    iconSize, iconSize), smoothingPaint);
+        } else {
+            try {
+                Drawable icon = StatusBarIconView.getIcon(mContext,
+                    new StatusBarIcon(notification.getPackageName(), notification.getUser(), notif.icon,
+                    notif.iconLevel, notif.number, notif.tickerText));
+                if (icon == null) icon = mContext.getPackageManager().getApplicationIcon(notification.getPackageName());
+                int margin = (iconSize - smallIconSize) / 2;
+                icon.setBounds(margin, margin, iconSize - margin, iconSize - margin);
+                icon.draw(canvas);
+            } catch (Exception e) {
+                // NameNotFoundException
+            }
+        }        
+        entry.roundIcon = roundIcon;
+    }
+
     protected void maybeCollapseAfterNotificationRemoval(boolean userDismissed) {
         if (mAutoCollapseBehaviour == Settings.System.STATUS_BAR_COLLAPSE_NEVER) {
             return;
@@ -1239,8 +1424,18 @@ public abstract class BaseStatusBar extends SystemUI implements
             return null;
         }
 
-        // Construct the expanded view.
         NotificationData.Entry entry = new NotificationData.Entry(key, notification, iconView);
+        prepareHaloNotification(entry, notification, false);
+        entry.hide = entry.notification.getPackageName().equals("com.paranoid.halo");
+
+        final PendingIntent contentIntent = notification.getNotification().contentIntent;
+        if (contentIntent != null) {
+            entry.floatingIntent = makeClicker(contentIntent,
+                    notification.getPackageName(), notification.getTag(), notification.getId());
+            entry.floatingIntent.makeFloating(true);
+        }
+
+        // Construct the expanded view.
         if (!inflateViews(entry, mPile)) {
             handleNotificationError(key, notification, "Couldn't expand RemoteViews for: "
                     + notification);
@@ -1271,6 +1466,7 @@ public abstract class BaseStatusBar extends SystemUI implements
             lp.height = rowHeight;
         }
         entry.row.setLayoutParams(lp);
+        if (entry.hide) entry.row.setVisibility(View.GONE);
         return expand;
     }
 
@@ -1363,7 +1559,8 @@ public abstract class BaseStatusBar extends SystemUI implements
 
         boolean updateTicker = notification.getNotification().tickerText != null
                 && !TextUtils.equals(notification.getNotification().tickerText,
-                        oldEntry.notification.getNotification().tickerText);
+                        oldEntry.notification.getNotification().tickerText) ||
+                mHaloActive;
 
         boolean isTopAnyway = isTopNotification(rowParent, oldEntry);
         if (contentsUnchanged && bigContentsUnchanged && (orderUnchanged || isTopAnyway)) {
@@ -1375,6 +1572,7 @@ public abstract class BaseStatusBar extends SystemUI implements
                 if (bigContentView != null && oldEntry.getLargeView() != null) {
                     bigContentView.reapply(mContext, oldEntry.getLargeView(), mOnClickHandler);
                 }
+
                 // update the contentIntent
                 final PendingIntent contentIntent = notification.getNotification().contentIntent;
 
@@ -1382,9 +1580,16 @@ public abstract class BaseStatusBar extends SystemUI implements
                     final View.OnClickListener listener = makeClicker(contentIntent,
                             notification.getPackageName(), notification.getTag(), notification.getId());
                     oldEntry.content.setOnClickListener(listener);
+                    oldEntry.floatingIntent = makeClicker(contentIntent,
+                            notification.getPackageName(), notification.getTag(), notification.getId());
+                    oldEntry.floatingIntent.makeFloating(true);
                 } else {
                     oldEntry.content.setOnClickListener(null);
+                    oldEntry.floatingIntent = null;
                 }
+                // Update the roundIcon
+                prepareHaloNotification(oldEntry, notification, true);
+
                 // Update the icon.
                 final StatusBarIcon ic = new StatusBarIcon(notification.getPackageName(),
                         notification.getUser(),
@@ -1446,6 +1651,9 @@ public abstract class BaseStatusBar extends SystemUI implements
                 mHandler.sendEmptyMessage(MSG_HIDE_INTRUDER);
             }
         }
+
+        // Update halo
+        if (mHalo != null) mHalo.update();
     }
 
     // Q: What kinds of notifications should show during setup?
@@ -1496,8 +1704,10 @@ public abstract class BaseStatusBar extends SystemUI implements
         resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.HALO_BUTTON_COLOR), false, this, UserHandle.USER_ALL);
         resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.HALO_TEXT_BUBBLE_COLOR), false, this, UserHandle.USER_ALL);
-        resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_ACTIVE), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_SIZE), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.HALO_PING_COLOR), false, this, UserHandle.USER_ALL);
         }
 
@@ -1507,12 +1717,14 @@ public abstract class BaseStatusBar extends SystemUI implements
 		uri.equals(Settings.System.getUriFor(Settings.System.TABLET_MODE))||
 		uri.equals(Settings.System.getUriFor(Settings.System.SETTINGS_TILE_COLOR))||
 		uri.equals(Settings.System.getUriFor(Settings.System.HALO_BUTTON_COLOR))||
-		uri.equals(Settings.System.getUriFor(Settings.System.HALO_TEXT_BUBBLE_COLOR))||
 		uri.equals(Settings.System.getUriFor(Settings.System.HALO_PING_COLOR))||
 		uri.equals(Settings.System.getUriFor(Settings.System.QUICK_SETTINGS_COLUMNS))) {
             	android.os.Process.killProcess(android.os.Process.myPid());
-	    }
-            if (uri.equals(Settings.System.getUriFor(Settings.System.NAVIGATION_BAR_SHOW))) {
+            } else if (uri.equals(Settings.System.getUriFor(Settings.System.HALO_ACTIVE))) {
+	            updateHalo();
+            } else if (uri.equals(Settings.System.getUriFor(Settings.System.HALO_SIZE))) {
+	            restartHalo();
+            } else if (uri.equals(Settings.System.getUriFor(Settings.System.NAVIGATION_BAR_SHOW))) {
 		if (mNavBarFirstBootFlag) {
             		android.os.Process.killProcess(android.os.Process.myPid());
 		}

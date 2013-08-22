@@ -336,9 +336,6 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
 
         mKillX = mScreenWidth / 2;
         mKillY = mIconHalfSize;
-
-        // In the unlikely event the user still holds on to HALO just let it be
-        if (mState != State.IDLE) return;
         
         // Halo dock position
         preferences = mContext.getSharedPreferences("Halo", 0);
@@ -1340,6 +1337,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
         mEffect.tickerAnimator.cancel(true);
         mEffect.mHaloNumber.setAlpha(0f);
         mEffect.mHaloNumberIcon.setAlpha(0f);
+        mEffect.mHaloNumberContainer.setAlpha(0f);
         mContentIntent = null;
         mCurrentNotficationEntry = null;
         mEffect.killTicker();
@@ -1390,7 +1388,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
         if (entry.notification.getPackageName().equals("com.paranoid.halo")) {
             msgType = HaloProperties.MessageType.PINNED;
         } else if (!entry.notification.isClearable()) {
-            msgType = HaloProperties.MessageType.PINNED;
+            msgType = HaloProperties.MessageType.SYSTEM;
         } else {
             msgType = HaloProperties.MessageType.MESSAGE;
         }

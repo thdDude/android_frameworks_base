@@ -182,7 +182,7 @@ public abstract class BaseStatusBar extends SystemUI implements
     protected boolean mHaloActive;
     protected boolean mHaloTaskerActive = false;
     protected ImageView mHaloButton;
-    protected boolean mHaloButtonVisible = true;
+    protected boolean mHaloButtonVisible = false;
 
     private Runnable mPanelCollapseRunnable = new Runnable() {
         @Override
@@ -544,7 +544,7 @@ public abstract class BaseStatusBar extends SystemUI implements
         mContext.getContentResolver().registerContentObserver(
                 Settings.System.getUriFor(Settings.System.HALO_SIZE), false, new ContentObserver(new Handler()) {
             @Override
-            public void onChange(boolean selfChange) {                
+            public void onChange(boolean selfChange) {
                 restartHalo();
             }});
 
@@ -1388,7 +1388,7 @@ public abstract class BaseStatusBar extends SystemUI implements
             } catch (Exception e) {
                 // NameNotFoundException
             }
-        }        
+        }
         entry.roundIcon = roundIcon;
     }
 
@@ -1723,18 +1723,13 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.HALO_SIZE), false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.HALO_PING_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_GONE), false, this, UserHandle.USER_ALL);
         }
 
         @Override
         public void onChange(boolean selfChange, Uri uri) {
-            if (uri.equals(Settings.System.getUriFor(Settings.System.HIGH_END_GFX_ENABLED)) ||
-		uri.equals(Settings.System.getUriFor(Settings.System.TABLET_MODE))||
-		uri.equals(Settings.System.getUriFor(Settings.System.SETTINGS_TILE_COLOR))||
-		uri.equals(Settings.System.getUriFor(Settings.System.HALO_BUTTON_COLOR))||
-		uri.equals(Settings.System.getUriFor(Settings.System.HALO_PING_COLOR))||
-		uri.equals(Settings.System.getUriFor(Settings.System.QUICK_SETTINGS_COLUMNS))) {
-            	android.os.Process.killProcess(android.os.Process.myPid());
-            } else if (uri.equals(Settings.System.getUriFor(Settings.System.HALO_ACTIVE))) {
+            if (uri.equals(Settings.System.getUriFor(Settings.System.HALO_ACTIVE))) {
 	            updateHalo();
             } else if (uri.equals(Settings.System.getUriFor(Settings.System.HALO_SIZE))) {
 	            restartHalo();
@@ -1742,6 +1737,8 @@ public abstract class BaseStatusBar extends SystemUI implements
 		if (mNavBarFirstBootFlag) {
             		android.os.Process.killProcess(android.os.Process.myPid());
 		}
+	    } else {
+            	android.os.Process.killProcess(android.os.Process.myPid());
 	    }
         }
     }

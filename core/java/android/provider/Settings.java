@@ -1845,6 +1845,28 @@ public final class Settings {
         public static final String AUTO_BRIGHTNESS_TWILIGHT_ADJUSTMENT = "auto_brightness_twilight_adjustment";
 
         /**
+         * The keyboard brightness to be used while the screen is on.
+         * Valid value range is between 0 and {@link PowerManager#getMaximumKeyboardBrightness()}
+         * @hide
+         */
+        public static final String KEYBOARD_BRIGHTNESS = "keyboard_brightness";
+
+        /**
+         * The button brightness to be used while the screen is on or after a button press,
+         * depending on the value of {@link BUTTON_BACKLIGHT_TIMEOUT}.
+         * Valid value range is between 0 and {@link PowerManager#getMaximumButtonBrightness()}
+         * @hide
+         */
+        public static final String BUTTON_BRIGHTNESS = "button_brightness";
+
+        /**
+         * The time in ms to keep the button backlight on after pressing a button.
+         * A value of 0 will keep the buttons on for as long as the screen is on.
+         * @hide
+         */
+        public static final String BUTTON_BACKLIGHT_TIMEOUT = "button_backlight_timeout";
+
+        /**
          * Whether to enable the electron beam animation when turning screen off
          *
          * @hide */
@@ -3000,82 +3022,27 @@ public final class Settings {
          */
         public static final String SETTINGS_TILE_COLOR = "settings_tile_color";
   
-      /**
-         * Whether to allow killing of the foreground app by long-pressing the Back button
-         * @hide
-         */
-        public static final String KILL_APP_LONGPRESS_BACK = "kill_app_longpress_back";
 
         /**
-         * Enable Notification Toggles Icon Color
+         * Quick Settings Quick access ribbon
          *
          * @hide
          */
-        public static final String ENABLE_TOGGLE_COLORS = "enable_toggle_colors";
-	
-         /**
-         * Enable Notification Toggles Bar
-         *
-         * @hide
-         */
-        public static final String ENABLE_TOGGLE_BAR = "enable_toggle_bar";
+        public static final String QS_QUICK_ACCESS = "qs_quick_access";
 
         /**
-         * Notification Toggles Icon Color (On)
+         * Quick Settings Quick access ribbon - linked layout
          *
          * @hide
          */
-        public static final String TOGGLE_ICON_ON_COLOR = "toggle_icon_color_on";
+        public static final String QS_QUICK_ACCESS_LINKED = "qs_quick_access_linked";
 
         /**
-         * Notification Toggles Icon Color (Off)
+         * Quick Settings Ribbon Tiles to Use
          *
          * @hide
          */
-        public static final String TOGGLE_ICON_OFF_COLOR = "toggle_icon_color_off";
-
-        /**
-         * Use the Notification Power Widget? (Who wouldn't!)
-         *
-         * @hide
-         */
-        public static final String EXPANDED_VIEW_WIDGET = "expanded_view_widget";
-
-        /**
-         * Whether to hide the notification screen after clicking on a widget
-         * button
-         *
-         * @hide
-         */
-        public static final String EXPANDED_HIDE_ONCHANGE = "expanded_hide_onchange";
-
-        /**
-         * Hide scroll bar in power widget
-         *
-         * @hide
-         */
-        public static final String EXPANDED_HIDE_SCROLLBAR = "expanded_hide_scrollbar";
-
-        /**
-         * Haptic feedback in power widget
-         *
-         * @hide
-         */
-        public static final String EXPANDED_HAPTIC_FEEDBACK = "expanded_haptic_feedback";
-
-        /**
-         * Widget Buttons to Use
-         *
-         * @hide
-         */
-        public static final String WIDGET_BUTTONS = "expanded_widget_buttons";
-
-        /**
-         * Widget Buttons to Use - Tablet
-         *
-         * @hide
-         */
-        public static final String WIDGET_BUTTONS_TABLET = "expanded_widget_buttons_tablet";
+        public static final String QUICK_SETTINGS_RIBBON_TILES = "quick_settings_ribbon_tiles";
 
         /**
          * Navigation controls to Use
@@ -3085,77 +3052,22 @@ public final class Settings {
         public static final String NAV_BUTTONS = "nav_buttons";
 
         /**
-         * Enable Menu key
-         *
-         * @hide
-         */
-        public static final String KEY_MENU_ENABLED = "key_menu_enabled";
-
-        /**
-         * Enable Back key
-         *
-         * @hide
-         */
-        public static final String KEY_BACK_ENABLED = "key_back_enabled";
-
-        /**
-         * Enable Home key
-         *
-         * @hide
-         */
-        public static final String KEY_HOME_ENABLED = "key_home_enabled";
-
-      /**
-         * Timeout for longpress back kill
-         * @hide
-         */
-        public static final String KILL_APP_LONGPRESS_TIMEOUT = "kill_app_longpress_timeout";
-
-      /**
-        * Navigation Bar show switch
-         *
-         * @hide
-         */
-        //public static final String NAVIGATION_BAR_SHOW = "navigation_bar_show";
-        public static final String NAVIGATION_CONTROLS = "navigation_controls";
-
-  
-      /**
-         * Height of navigation bar buttons
-         * @hide
-         */
-        public static final String NAV_BUTTONS_HEIGHT = "nav_buttons_height";
-
-
-        /**
-        * Notification Power Widget - Custom Brightness Mode
-        * @hide
-        */
-        public static final String EXPANDED_BRIGHTNESS_MODE = "expanded_brightness_mode";
-
-        /**
-        * Notification Power Widget - Custom Network Mode
+        * Quick Settings - Custom Network Mode
         * @hide
         */
         public static final String EXPANDED_NETWORK_MODE = "expanded_network_mode";
 
         /**
-        * Notification Power Widget - Custom Screen Timeout
+        * Quick Settings - Custom Screen Timeout
         * @hide
         */
         public static final String EXPANDED_SCREENTIMEOUT_MODE = "expanded_screentimeout_mode";
 
         /**
-        * Notification Power Widget - Custom Ring Mode
+        * Quick Settings - Custom Ring Mode
         * @hide
         */
         public static final String EXPANDED_RING_MODE = "expanded_ring_mode";
-
-        /**
-        * Notification Power Widget - Custom Torch Mode
-        * @hide
-        */
-        public static final String EXPANDED_FLASH_MODE = "expanded_flash_mode";
 
         /**
         * AutoHide CombinedBar on tablets.
@@ -3277,6 +3189,55 @@ public final class Settings {
          * @hide
          */
         public static final String EXPANDED_DESKTOP_STATE = "expanded_desktop_state";
+
+        /**
+         * Enable Menu key
+         *
+         * @hide
+         */
+        public static final String KEY_MENU_ENABLED = "key_menu_enabled";
+
+        /**
+         * Enable Back key
+         *
+         * @hide
+         */
+        public static final String KEY_BACK_ENABLED = "key_back_enabled";
+
+        /**
+         * Enable Home key
+         *
+         * @hide
+         */
+        public static final String KEY_HOME_ENABLED = "key_home_enabled";
+
+      /**
+         * Whether to allow killing of the foreground app by long-pressing the Back button
+         * @hide
+         */
+        public static final String KILL_APP_LONGPRESS_BACK = "kill_app_longpress_back";
+
+      /**
+         * Timeout for longpress back kill
+         * @hide
+         */
+        public static final String KILL_APP_LONGPRESS_TIMEOUT = "kill_app_longpress_timeout";
+
+      /**
+        * Navigation Bar show switch
+         *
+         * @hide
+         */
+        //public static final String NAVIGATION_BAR_SHOW = "navigation_bar_show";
+        public static final String NAVIGATION_CONTROLS = "navigation_controls";
+
+  
+      /**
+         * Height of navigation bar buttons
+         * @hide
+         */
+        public static final String NAV_BUTTONS_HEIGHT = "nav_buttons_height";
+
 
        /**
         * Whether fcharge is enabled or not if kernel supports it
@@ -3807,6 +3768,13 @@ public final class Settings {
           * @hide
           */
          public static final String KEY_HOME_LONG_PRESS_ACTION = "key_home_long_press_action";
+
+         /**
+          * Action to perform when the home key is double-tapped. (Default is 0)
+          * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+          * @hide
+          */
+         public static final String KEY_HOME_DOUBLE_TAP_ACTION = "key_home_double_tap_action";
 
          /**
           * Action to perform when the menu key is pressed. (Default is 1)
@@ -4931,6 +4899,13 @@ public final class Settings {
         public static final String ALLOW_MOCK_LOCATION = "mock_location";
 
         /**
+         * Setting to allow the use of com.android.internal.telephony.SMSDispatcher#MockSmsReceiver
+         * to simulate the reception of SMS for testing purposes during application development.
+         * @hide
+         */
+         public static final String ALLOW_MOCK_SMS = "mock_sms";
+
+        /**
          * A 64-bit number (as a hex string) that is randomly
          * generated on the device's first boot and should remain
          * constant for the lifetime of the device.  (The value may
@@ -5987,6 +5962,7 @@ public final class Settings {
         public static final String[] SETTINGS_TO_BACKUP = {
             BUGREPORT_IN_POWER_MENU,                            // moved to global
             ALLOW_MOCK_LOCATION,
+            ALLOW_MOCK_SMS,
             PARENTAL_CONTROL_ENABLED,
             PARENTAL_CONTROL_REDIRECT_URL,
             USB_MASS_STORAGE_ENABLED,                           // moved to global

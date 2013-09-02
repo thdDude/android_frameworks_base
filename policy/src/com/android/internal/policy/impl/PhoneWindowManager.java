@@ -687,6 +687,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
              resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.TABLET_MODE), false, this,
                     UserHandle.USER_ALL);
+	    resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAVIGATION_BAR_CAN_MOVE), false, this,
+		    UserHandle.USER_ALL);  
 
             updateSettings();
         }
@@ -1361,7 +1364,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         if (shortSizeDp < 600 && !tabletModeOverride) {
             // 0-599dp: "phone" UI with a separate status & navigation bar
             mHasSystemNavBar = false;
-            mNavigationBarCanMove = true;
+            if (Settings.System.getInt(mContext.getContentResolver(),
+                        Settings.System.NAVIGATION_BAR_CAN_MOVE, 1) == 1) {
+                mNavigationBarCanMove = true;
+            } else {
+                mNavigationBarCanMove = false;
+            } 
         } else if (shortSizeDp < 720 && !tabletModeOverride) {
             // 600+dp: "phone" UI with modifications for larger screens
             mHasSystemNavBar = false;
@@ -1578,6 +1586,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
             boolean keyRebindingEnabled = Settings.System.getIntForUser(resolver,
                     Settings.System.HARDWARE_KEY_REBINDING, 0, UserHandle.USER_CURRENT) == 1;
+
+            boolean tabletModeOverride = Settings.System.getInt(resolver,
+                        Settings.System.TABLET_MODE, 0) == 1;
+
+	    if (mShortSizeDp < 600 && !tabletModeOverride) {
+                mNavigationBarCanMove = (Settings.System.getInt(resolver,
+                        Settings.System.NAVIGATION_BAR_CAN_MOVE, 1) == 1);
+            } 
+
 
             mHasMenuKeyEnabled = false;
 

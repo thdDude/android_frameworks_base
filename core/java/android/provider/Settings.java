@@ -3265,8 +3265,14 @@ public final class Settings {
          *
          * @hide
          */
-        //public static final String NAVIGATION_BAR_SHOW = "navigation_bar_show";
         public static final String NAVIGATION_CONTROLS = "navigation_controls";
+
+      /**
+        * Navigation Bar can move
+         *
+         * @hide
+         */
+        public static final String NAVIGATION_BAR_CAN_MOVE = "navigation_bar_can_move";
 
   
       /**

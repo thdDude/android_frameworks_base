@@ -1699,6 +1699,17 @@ public abstract class BaseStatusBar extends SystemUI implements
         }
     }
 
+    public int getExpandedDesktopMode() {
+        ContentResolver resolver = mContext.getContentResolver();
+        boolean expanded = Settings.System.getIntForUser(resolver,
+                Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT) == 1;
+        if (expanded) {
+            return Settings.System.getIntForUser(resolver,
+                    Settings.System.EXPANDED_DESKTOP_STYLE, 0, UserHandle.USER_CURRENT);
+        }
+        return 0;
+    }
+
     public void addNavigationBarCallback(NavigationBarCallback callback) {
         mNavigationCallbacks.add(callback);
     }

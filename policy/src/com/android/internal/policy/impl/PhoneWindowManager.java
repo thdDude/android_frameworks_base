@@ -2073,12 +2073,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             // For the system navigation bar, we always place it at the bottom.
             return fullHeight - mNavigationBarHeightForRotation[rotation];
         }
-        if (mHasNavigationBar && !expandedDesktopHidesNavigationBar()) {
-            // For a basic navigation bar, when we are in portrait mode we place
-            // the navigation bar to the bottom.
-            if (!mNavigationBarCanMove || fullWidth < fullHeight) {
-                return fullHeight - mNavigationBarHeightForRotation[rotation];
-            }
+        // For a basic navigation bar, when we are in portrait mode we place
+        // the navigation bar to the bottom.
+        if (!mNavigationBarCanMove || fullWidth < fullHeight) {
+            return fullHeight - mNavigationBarHeightForRotation[rotation]; 
         }
         return fullHeight;
     }
@@ -3562,7 +3560,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         final Rect cf = mTmpContentFrame;
         final Rect vf = mTmpVisibleFrame;
 
-        final boolean hasNavBar = (isDefaultDisplay && mNavigationBar != null && mNavigationBar.isVisibleLw());
+        final boolean hasNavBar = (isDefaultDisplay && mNavigationBar != null
+                && mNavigationBar.isVisibleLw());    
 
         final int adjust = sim & SOFT_INPUT_MASK_ADJUST;
 

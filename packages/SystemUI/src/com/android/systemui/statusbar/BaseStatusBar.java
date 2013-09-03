@@ -1676,6 +1676,9 @@ public abstract class BaseStatusBar extends SystemUI implements
 	resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.HIGH_END_GFX_ENABLED), false, this,
                     UserHandle.USER_ALL);
+	resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.QUICK_SETTINGS_COLUMNS), false, this,
+                    UserHandle.USER_ALL);
         resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NAVIGATION_BAR_SHOW), false, this);
         resolver.registerContentObserver(Settings.System.getUriFor(
@@ -1688,7 +1691,8 @@ public abstract class BaseStatusBar extends SystemUI implements
         public void onChange(boolean selfChange, Uri uri) {
             if (uri.equals(Settings.System.getUriFor(Settings.System.HIGH_END_GFX_ENABLED)) ||
 		uri.equals(Settings.System.getUriFor(Settings.System.TABLET_MODE))||
-		uri.equals(Settings.System.getUriFor(Settings.System.SETTINGS_TILE_COLOR))) {
+		uri.equals(Settings.System.getUriFor(Settings.System.SETTINGS_TILE_COLOR))||
+		uri.equals(Settings.System.getUriFor(Settings.System.QUICK_SETTINGS_COLUMNS))) {
             	android.os.Process.killProcess(android.os.Process.myPid());
 	    }
             if (uri.equals(Settings.System.getUriFor(Settings.System.NAVIGATION_BAR_SHOW))) {

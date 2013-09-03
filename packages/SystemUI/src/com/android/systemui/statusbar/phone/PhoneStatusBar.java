@@ -590,7 +590,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         try {
             boolean showNav = mWindowManagerService.hasNavigationBar();
             if (DEBUG) Slog.v(TAG, "hasNavigationBar=" + showNav);
-            if (!mRecreating) {
+            if (mNavigationBarView == null) {
                 mNavigationBarView =
                     (NavigationBarView) View.inflate(context, R.layout.navigation_bar, null);
 

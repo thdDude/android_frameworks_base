@@ -107,13 +107,6 @@ public class TabletTicker
         if (mQueuePos < QUEUE_LENGTH - 1) {
             mQueuePos++;
         }
-<<<<<<< HEAD
-
-        if (mEvent != null && notification != null && notification.getNotification().tickerText != null) {
-            mEvent.updateTicker(notification, notification.getNotification().tickerText.toString());
-        }
-=======
->>>>>>> parent of 55ac45c... Initial HALO import from ParanoidAndroid
     }
 
     public void remove(IBinder key) {

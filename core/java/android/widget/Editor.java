@@ -1360,7 +1360,6 @@ public class Editor {
                             // Same as drawDisplayList below, handled by our TextView's parent
                             blockDisplayList.setClipToBounds(false);
                         }
-                    }
                 }
 
                 ((HardwareCanvas) canvas).drawDisplayList(blockDisplayList, null,

@@ -126,6 +126,7 @@ public class Editor {
     InputMethodState mInputMethodState;
 
     DisplayList[] mTextDisplayLists;
+    int mLastLayoutHeight;
 
     boolean mFrozenWithFocus;
     boolean mSelectionMoved;
@@ -1290,11 +1291,20 @@ public class Editor {
                 mTextDisplayLists = new DisplayList[ArrayUtils.idealObjectArraySize(0)];
             }
 
+            // If the height of the layout changes (usually when inserting or deleting a line,
+            // but could be changes within a span), invalidate everything. We could optimize
+            // more aggressively (for example, adding offsets to blocks) but it would be more
+            // complex and we would only get the benefit in some cases.
+            int layoutHeight = layout.getHeight();
+            if (mLastLayoutHeight != layoutHeight) {
+                invalidateTextDisplayList();
+                mLastLayoutHeight = layoutHeight;
+            }
+
             DynamicLayout dynamicLayout = (DynamicLayout) layout;
             int[] blockEndLines = dynamicLayout.getBlockEndLines();
             int[] blockIndices = dynamicLayout.getBlockIndices();
             final int numberOfBlocks = dynamicLayout.getNumberOfBlocks();
-            final int indexFirstChangedBlock = dynamicLayout.getIndexFirstChangedBlock();
 
             int endOfPreviousBlock = -1;
             int searchStartIndex = 0;
@@ -1319,8 +1329,7 @@ public class Editor {
                     if (blockIsInvalid) blockDisplayList.clear();
                 }
 
-                final boolean blockDisplayListIsInvalid = !blockDisplayList.isValid();
-                if (i >= indexFirstChangedBlock || blockDisplayListIsInvalid) {
+                if (!blockDisplayList.isValid()) {
                     final int blockBeginLine = endOfPreviousBlock + 1;
                     final int top = layout.getLineTop(blockBeginLine);
                     final int bottom = layout.getLineBottom(blockEndLine);
@@ -1337,8 +1346,6 @@ public class Editor {
                         right = (int) (max + 0.5f);
                     }
 
-                    // Rebuild display list if it is invalid
-                    if (blockDisplayListIsInvalid) {
                         final HardwareCanvas hardwareCanvas = blockDisplayList.start(
                                 right - left, bottom - top);
                         try {
@@ -1354,10 +1361,6 @@ public class Editor {
                             blockDisplayList.setClipToBounds(false);
                         }
                     }
-
-                    // Valid disply list whose index is >= indexFirstChangedBlock
-                    // only needs to update its drawing location.
-                    blockDisplayList.setLeftTopRightBottom(left, top, right, bottom);
                 }
 
                 ((HardwareCanvas) canvas).drawDisplayList(blockDisplayList, null,
@@ -1365,8 +1368,6 @@ public class Editor {
 
                 endOfPreviousBlock = blockEndLine;
             }
-
-            dynamicLayout.setIndexFirstChangedBlock(numberOfBlocks);
         } else {
             // Boring layout is used for empty and hint text
             layout.drawText(canvas, firstLine, lastLine);

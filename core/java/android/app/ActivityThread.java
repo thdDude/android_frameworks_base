@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2006 The Android Open Source Project
- * This code has been modified.  Portions copyright (C) 2012, ParanoidAndroid Project.
  * This code has been modified.  Portions copyright (C) 2010, T-Mobile USA, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -2906,7 +2905,6 @@ public final class ActivityThread {
                     deliverResults(r, r.pendingResults);
                     r.pendingResults = null;
                 }
-
                 r.activity.performResume();
 
                 EventLog.writeEvent(LOG_ON_RESUME_CALLED,
@@ -2916,7 +2914,12 @@ public final class ActivityThread {
                 r.stopped = false;
                 r.state = null;
             } catch (Exception e) {
-                // Unable to resume activity
+                if (!mInstrumentation.onException(r.activity, e)) {
+                    throw new RuntimeException(
+                        "Unable to resume activity "
+                        + r.intent.getComponent().toShortString()
+                        + ": " + e.toString(), e);
+                }
             }
         }
         return r;
@@ -4928,17 +4931,17 @@ public final class ActivityThread {
                     iter.remove();
                 }
             }
+        }
 
-            try {
-                if (DEBUG_PROVIDER) {
-                    Slog.v(TAG, "removeProvider: Invoking ActivityManagerNative."
-                            + "removeContentProvider(" + prc.holder.info.name + ")");
-                }
-                ActivityManagerNative.getDefault().removeContentProvider(
-                        prc.holder.connection, false);
-            } catch (RemoteException e) {
-                //do nothing content provider object is dead any way
+        try {
+            if (DEBUG_PROVIDER) {
+                Slog.v(TAG, "removeProvider: Invoking ActivityManagerNative."
+                        + "removeContentProvider(" + prc.holder.info.name + ")");
             }
+            ActivityManagerNative.getDefault().removeContentProvider(
+                    prc.holder.connection, false);
+        } catch (RemoteException e) {
+            //do nothing content provider object is dead any way
         }
     }
 

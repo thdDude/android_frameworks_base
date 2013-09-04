@@ -1493,6 +1493,12 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.TABLET_MODE), false, this);
         resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.SETTINGS_TILE_COLOR), false, this);
+        resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_BUTTON_COLOR), false, this, UserHandle.USER_ALL);
+        resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_TEXT_BUBBLE_COLOR), false, this, UserHandle.USER_ALL);
+        resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_PING_COLOR), false, this, UserHandle.USER_ALL);
         }
 
         @Override
@@ -1500,6 +1506,9 @@ public abstract class BaseStatusBar extends SystemUI implements
             if (uri.equals(Settings.System.getUriFor(Settings.System.HIGH_END_GFX_ENABLED)) ||
 		uri.equals(Settings.System.getUriFor(Settings.System.TABLET_MODE))||
 		uri.equals(Settings.System.getUriFor(Settings.System.SETTINGS_TILE_COLOR))||
+		uri.equals(Settings.System.getUriFor(Settings.System.HALO_BUTTON_COLOR))||
+		uri.equals(Settings.System.getUriFor(Settings.System.HALO_TEXT_BUBBLE_COLOR))||
+		uri.equals(Settings.System.getUriFor(Settings.System.HALO_PING_COLOR))||
 		uri.equals(Settings.System.getUriFor(Settings.System.QUICK_SETTINGS_COLUMNS))) {
             	android.os.Process.killProcess(android.os.Process.myPid());
 	    }

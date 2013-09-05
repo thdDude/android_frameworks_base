@@ -167,20 +167,6 @@ public class HaloProperties extends FrameLayout {
             haloBackground.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
             haloBackground.setAlpha(Color.alpha(color));
         }
-        color = Settings.System.getIntForUser(context.getContentResolver(),
-                Settings.System.HALO_TEXT_BUBBLE_COLOR, 0x00000000, UserHandle.USER_CURRENT);
-
-        if (color != 0x00000000) {
-            Drawable background = mHaloTextView.getBackground();
-            int top = mHaloTextView.getPaddingTop();
-            int bottom = mHaloTextView.getPaddingBottom();
-            int left = mHaloTextView.getPaddingLeft();
-            int right = mHaloTextView.getPaddingRight();
-            background.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-            background.setAlpha(Color.alpha(color));
-            mHaloTextView.setBackgroundDrawable(background);
-            mHaloTextView.setPadding(left, top, right, bottom);
-        }
     }
 
     int newPaddingHShort;

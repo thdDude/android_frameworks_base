@@ -3789,11 +3789,6 @@ public final class Settings {
         /**
          * @hide
          */
-        public static final String HALO_TEXT_BUBBLE_COLOR = "halo_text_bubble_color";
-
-        /**
-         * @hide
-         */
         public static final String HALO_PING_COLOR = "halo_ping_color";
 
         /**

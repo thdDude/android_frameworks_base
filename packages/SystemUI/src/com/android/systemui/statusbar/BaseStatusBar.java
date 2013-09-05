@@ -1725,6 +1725,8 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.HALO_PING_COLOR), false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.HALO_GONE), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_TEXT_BUBBLE_COLOR), false, this, UserHandle.USER_ALL);
         }
 
         @Override

@@ -171,25 +171,15 @@ public class HaloProperties extends FrameLayout {
                 Settings.System.HALO_TEXT_BUBBLE_COLOR, 0x00000000, UserHandle.USER_CURRENT);
 
         if (color != 0x00000000) {
-            Drawable background = mHaloTextViewR.getBackground();
-            int top = mHaloTextViewR.getPaddingTop();
-            int bottom = mHaloTextViewR.getPaddingBottom();
-            int left = mHaloTextViewR.getPaddingLeft();
-            int right = mHaloTextViewR.getPaddingRight();
+            Drawable background = mHaloTextView.getBackground();
+            int top = mHaloTextView.getPaddingTop();
+            int bottom = mHaloTextView.getPaddingBottom();
+            int left = mHaloTextView.getPaddingLeft();
+            int right = mHaloTextView.getPaddingRight();
             background.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
             background.setAlpha(Color.alpha(color));
-            mHaloTextViewR.setBackgroundDrawable(background);
-            mHaloTextViewR.setPadding(left, top, right, bottom);
-
-            background = mHaloTextViewL.getBackground();
-            top = mHaloTextViewL.getPaddingTop();
-            bottom = mHaloTextViewL.getPaddingBottom();
-            left = mHaloTextViewL.getPaddingLeft();
-            right = mHaloTextViewL.getPaddingRight();
-            background.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-            background.setAlpha(Color.alpha(color));
-            mHaloTextViewL.setBackgroundDrawable(background);
-            mHaloTextViewL.setPadding(left, top, right, bottom);
+            mHaloTextView.setBackgroundDrawable(background);
+            mHaloTextView.setPadding(left, top, right, bottom);
         }
     }
 

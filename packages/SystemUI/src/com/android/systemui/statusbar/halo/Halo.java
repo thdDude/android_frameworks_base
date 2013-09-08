@@ -1584,6 +1584,9 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                         mEffect.nap(1500);
                         if (mHideTicker) mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, false, mHide);
                     }
+	    	    if(mHide) {
+	    		mEffect.setVisibility(mNotificationData.size() > 0 ? View.VISIBLE : View.GONE);
+	    	    }
                 }
             }, mDismissDelay);
 

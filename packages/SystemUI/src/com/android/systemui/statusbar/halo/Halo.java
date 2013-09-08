@@ -317,9 +317,6 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
         mPaintHoloRed.setAntiAlias(true);
         mPaintHoloRed.setColor(0xffcc0000);
 
-        mHide = Settings.System.getIntForUser(mContext.getContentResolver(),
-                Settings.System.HALO_HIDDEN, 0, UserHandle.USER_CURRENT) == 2;
-
         // Create effect layer
         mEffect = new HaloEffect(mContext);
         mEffect.setLayerType (View.LAYER_TYPE_HARDWARE, null);
@@ -374,6 +371,9 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                 mEffect.setHaloX((int)(mTickerLeft ? -mIconSize*0.8f : mScreenWidth - mIconSize*0.2f));
                 final int triggerWidth = (int)(mTickerLeft ? -mIconSize*0.7f : mScreenWidth - mIconSize*0.3f);
                 updateTriggerPosition(triggerWidth, mEffect.mHaloY);
+		if(mHide) {
+	    	    mEffect.setVisibility(mNotificationData.size() > 0 ? View.VISIBLE : View.GONE);
+		}
             } else {
                 mEffect.nap(500);
                 if (mHideTicker) mEffect.sleep(HaloEffect.SNAP_TIME + HaloEffect.NAP_TIME + 2500, HaloEffect.SLEEP_TIME, false, mHide);
@@ -468,6 +468,9 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
         } else {
             clearTicker();
         }
+	if(mHide) {
+	    mEffect.setVisibility(mNotificationData.size() > 0 ? View.VISIBLE : View.GONE);
+	}
     }
 
     public void setStatusBar(BaseStatusBar bar) {
@@ -1194,7 +1197,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                             updateTriggerPosition(triggerWidth, mHaloY);
                         }});
 	    if(remove) {
-		mEffect.setVisibility(getHaloMsgCount()-getHidden() > 0 ? View.VISIBLE : View.GONE);
+		mEffect.setVisibility(mNotificationData.size() > 0 ? View.VISIBLE : View.GONE);
 	    }
         }
 

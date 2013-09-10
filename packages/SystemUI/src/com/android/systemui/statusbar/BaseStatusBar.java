@@ -561,6 +561,8 @@ public abstract class BaseStatusBar extends SystemUI implements
                 restartHalo();
             }});
 
+	updateHalo();
+
         SettingsObserver observer = new SettingsObserver(mHandler);
         observer.observe(mContext);
     }

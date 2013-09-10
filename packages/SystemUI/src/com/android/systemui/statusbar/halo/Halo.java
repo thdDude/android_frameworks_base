@@ -1197,7 +1197,11 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                             updateTriggerPosition(triggerWidth, mHaloY);
                         }});
 	    if(remove) {
-		mEffect.setVisibility(mNotificationData.size() > 0 ? View.VISIBLE : View.GONE);
+            	postDelayed(new Runnable() {
+            	    public void run() {
+                    	mEffect.setVisibility(mNotificationData.size() > 0 ? View.VISIBLE : View.GONE);
+            	    }
+            	}, delay);
 	    }
         }
 

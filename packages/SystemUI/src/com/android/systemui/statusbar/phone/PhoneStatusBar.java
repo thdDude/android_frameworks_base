@@ -604,9 +604,8 @@ public class PhoneStatusBar extends BaseStatusBar {
             // no window manager? good luck with that
         }
 
-        if (mRecreating) {
-            removeSidebarView();
-        }
+	//re-create sidebar
+        removeSidebarView();
         addSidebarView();
 
         // figure out which pixel-format to use for the status bar.
@@ -2882,6 +2881,8 @@ public class PhoneStatusBar extends BaseStatusBar {
                 updateResources();
                 repositionNavigationBar();
                 updateExpandedViewPos(EXPANDED_LEAVE_ALONE);
+		removeSidebarView();
+		addSidebarView();
 
                 try {
                     // position app sidebar on left if in landscape orientation and device has a navbar

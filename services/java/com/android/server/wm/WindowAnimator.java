@@ -53,15 +53,6 @@ public class WindowAnimator {
 
     int mAdjResult;
 
-    // Get the style from settings
-   
-    private static final int LOCK_STYLE_JB = 0;    
-    private static final int LOCK_STYLE_ICS = 1;
-    private static final int LOCK_STYLE_GB = 2;
-    private static final int LOCK_STYLE_ECLAIR = 3;
-    private static final int LOCK_STYLE_OP4 = 4;
-    private int mLockscreenStyle = LOCK_STYLE_JB;
-
     /** Time of current animation step. Reset on each iteration */
     long mCurrentTime;
 
@@ -265,11 +256,6 @@ public class WindowAnimator {
                         mService.mFocusMayChange = true;
                     }
                     if (win.isReadyForDisplay()) {
-    mLockscreenStyle = Settings.System.getInt(mContext.getContentResolver(),
-            Settings.System.LOCKSCREEN_STYLE, LOCK_STYLE_JB);
-
- 	boolean mUseOp4Lockscreen = (mLockscreenStyle == LOCK_STYLE_OP4);
-		    if(!mUseOp4Lockscreen) {
                         if (Settings.System.getInt(mContext.getContentResolver(),
                                     Settings.System.LOCKSCREEN_SEE_THROUGH, 0) != 0 ||
                                     nowAnimating) {
@@ -281,9 +267,6 @@ public class WindowAnimator {
                         } else {
                             mForceHiding = KEYGUARD_SHOWN;
                         }
-		    } else {
-			mForceHiding = KEYGUARD_NOT_SHOWN;
-		    }
                     }
                     if (WindowManagerService.DEBUG_VISIBILITY) Slog.v(TAG,
                             "Force hide " + mForceHiding

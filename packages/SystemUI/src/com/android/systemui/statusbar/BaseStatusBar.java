@@ -2093,8 +2093,8 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     protected void addSidebarView() {
         mAppSidebar = (AppSidebar)View.inflate(mContext, R.layout.app_sidebar, null);
-	int mSidebarPosition = Settings.System.getInt(
-                    resolver, Settings.System.APP_SIDEBAR_POSITION, AppSidebar.SIDEBAR_POSITION_LEFT);
+	int mSidebarPosition = Settings.System.getInt(mContext.getContentResolver(),
+ 		Settings.System.APP_SIDEBAR_POSITION, AppSidebar.SIDEBAR_POSITION_LEFT);
         mWindowManager.addView(mAppSidebar, getAppSidebarLayoutParams(mSidebarPosition));
     }
 

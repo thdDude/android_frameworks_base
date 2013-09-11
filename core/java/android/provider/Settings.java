@@ -2581,6 +2581,12 @@ public final class Settings {
         public static final String LOCKSCREEN_STYLE = "lockscreen_style";
 
         /**
+         * Whether to use optimus4 background color as lockscreen background color.
+         * @hide
+         */
+        public static final String LOCKSCREEN_USEOP4COLOR = "lockscreen_useop4color";
+
+        /**
          * Stores values for custom lockscreen targets
          * @hide
          */

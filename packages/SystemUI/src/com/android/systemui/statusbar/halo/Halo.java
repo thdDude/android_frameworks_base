@@ -372,7 +372,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                 final int triggerWidth = (int)(mTickerLeft ? -mIconSize*0.7f : mScreenWidth - mIconSize*0.3f);
                 updateTriggerPosition(triggerWidth, mEffect.mHaloY);
 		if(mHide) {
-	    	    mEffect.setVisibility(mNotificationData.size() > 0 ? View.VISIBLE : View.GONE);
+	    	    mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, false, mHide);
 		}
             } else {
                 mEffect.nap(500);
@@ -469,7 +469,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
             clearTicker();
         }
 	if(mHide) {
-	    mEffect.setVisibility(mNotificationData.size() > 0 ? View.VISIBLE : View.GONE);
+	    mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, false, mHide);
 	}
     }
 
@@ -1588,8 +1588,8 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                         mEffect.nap(1500);
                         if (mHideTicker) mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, false, mHide);
                     }
-	    	    if(mHide) {
-	    		mEffect.setVisibility(mNotificationData.size() > 0 ? View.VISIBLE : View.GONE);
+	    	    if(mHide && c == 0) {
+	    		mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, false, mHide);
 	    	    }
                 }
             }, mDismissDelay);

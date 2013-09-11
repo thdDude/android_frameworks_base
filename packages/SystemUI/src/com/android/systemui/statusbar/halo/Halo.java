@@ -1201,7 +1201,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
             	    public void run() {
                     	mEffect.setVisibility(mNotificationData.size() > 0 ? View.VISIBLE : View.GONE);
             	    }
-            	}, delay);
+            	}, mNotificationData.size() > 0 ? 0 : delay);
 	    }
         }
 

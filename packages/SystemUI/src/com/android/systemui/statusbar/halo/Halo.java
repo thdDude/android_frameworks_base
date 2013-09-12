@@ -372,7 +372,8 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                 final int triggerWidth = (int)(mTickerLeft ? -mIconSize*0.7f : mScreenWidth - mIconSize*0.3f);
                 updateTriggerPosition(triggerWidth, mEffect.mHaloY);
 		if(mHide) {
-	    	    mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, false, mHide);
+		    final boolean iSsilent = (mState == State.SILENT);
+	    	    mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, iSsilent, mHide);
 		}
             } else {
                 mEffect.nap(500);
@@ -469,7 +470,8 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
             clearTicker();
         }
 	if(mHide) {
-	    mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, false, mHide);
+	    final boolean iSsilent = (mState == State.SILENT);
+	    mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, iSsilent, mHide);
 	}
     }
 
@@ -1189,13 +1191,16 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
         public void sleep(long delay, int speed, final boolean silent, final boolean remove) {
 	    
             final int newPos = (int)(mTickerLeft ? -mIconSize*0.8f : mScreenWidth - mIconSize*0.2f);
+	    final boolean mNewState = silent ? State.SILENT : State.HIDDEN;
+	    if (mNewState != mState) {
             snapAnimator.animate(ObjectAnimator.ofInt(this, "haloX", newPos).setDuration(speed),
                     new DecelerateInterpolator(), null, delay, new Runnable() {
                         public void run() {
-                            mState = silent ? State.SILENT : State.HIDDEN;
+                            mState = mNewState;
                             final int triggerWidth = (int)(mTickerLeft ? -mIconSize*0.7f : mScreenWidth - mIconSize*0.3f);
                             updateTriggerPosition(triggerWidth, mHaloY);
                         }});
+	    }
 	    if(remove) {
             	postDelayed(new Runnable() {
             	    public void run() {
@@ -1589,7 +1594,8 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                         if (mHideTicker) mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, false, mHide);
                     }
 	    	    if(mHide && c == 0) {
-	    		mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, false, mHide);
+			final boolean iSsilent = (mState == State.SILENT);
+	    		mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, iSsilent, mHide);
 	    	    }
                 }
             }, mDismissDelay);

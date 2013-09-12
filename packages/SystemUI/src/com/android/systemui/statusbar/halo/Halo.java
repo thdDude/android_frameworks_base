@@ -150,6 +150,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
     private HaloEffect mEffect;
     private WindowManager.LayoutParams mTriggerPos;
     private State mState = State.IDLE;
+    private State mNewState = State.IDLE;
     private Gesture mGesture = Gesture.NONE;
 
     private View mRoot;
@@ -1191,7 +1192,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
         public void sleep(long delay, int speed, final boolean silent, final boolean remove) {
 	    
             final int newPos = (int)(mTickerLeft ? -mIconSize*0.8f : mScreenWidth - mIconSize*0.2f);
-	    final boolean mNewState = silent ? State.SILENT : State.HIDDEN;
+    	    mNewState = silent ? State.SILENT : State.HIDDEN;
 	    if (mNewState != mState) {
             snapAnimator.animate(ObjectAnimator.ofInt(this, "haloX", newPos).setDuration(speed),
                     new DecelerateInterpolator(), null, delay, new Runnable() {

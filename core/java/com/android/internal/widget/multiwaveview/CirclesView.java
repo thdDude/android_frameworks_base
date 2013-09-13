@@ -91,8 +91,8 @@ public class CirclesView extends View implements ValueAnimator.AnimatorUpdateLis
     private OnTriggerListener mOnTriggerListener;
     private ArrayList<DrawableHolder> mDrawables = new ArrayList<DrawableHolder>(4);
     private boolean mFingerDown = false;
-    private float mRingRadius = 570.0f; // Radius of bitmap ring. Used to snap halo to it
-    private int mSnapRadius = 280; // minimum threshold for drag unlock
+    private float mRingRadius = 464.0f; // Radius of bitmap ring. Used to snap halo to it
+    private int mSnapRadius = 224; // minimum threshold for drag unlock
     private float mLockCenterX; // center of widget as dictated by widget size
     private float mLockCenterY;
     private float mMouseX; // current mouse position as of last touch event

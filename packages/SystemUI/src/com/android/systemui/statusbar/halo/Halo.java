@@ -150,7 +150,6 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
     private HaloEffect mEffect;
     private WindowManager.LayoutParams mTriggerPos;
     private State mState = State.IDLE;
-    private State mNewState = State.IDLE;
     private Gesture mGesture = Gesture.NONE;
 
     private View mRoot;
@@ -171,7 +170,6 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
     private boolean isBeingDragged = false;
     private boolean mHapticFeedback;
     private boolean mHideTicker;
-    private boolean mHide;
     private boolean mFirstStart = true;
     private boolean mInitialized = false;
     private boolean mTickerLeft = true;
@@ -209,7 +207,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.HALO_REVERSED), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.HALO_HIDDEN), false, this);
+                    Settings.System.HALO_HIDE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.HAPTIC_FEEDBACK_ENABLED), false, this);
             update(false);
@@ -221,22 +219,15 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
         }
 
         public void update(boolean selfChange) {
-            mInteractionReversed = Settings.System.getIntForUser(mContext.getContentResolver(),
-			Settings.System.HALO_REVERSED, 1, UserHandle.USER_CURRENT) == 1;
-            mHideTicker = Settings.System.getIntForUser(mContext.getContentResolver(),
-			Settings.System.HALO_HIDDEN, 0, UserHandle.USER_CURRENT) != 0;
-            mHide = Settings.System.getIntForUser(mContext.getContentResolver(),
-                        Settings.System.HALO_HIDDEN, 0, UserHandle.USER_CURRENT) == 2;
+            mInteractionReversed =
+                    Settings.System.getIntForUser(mContext.getContentResolver(), Settings.System.HALO_REVERSED, 1, UserHandle.USER_CURRENT) == 1;
+            mHideTicker =
+                    Settings.System.getIntForUser(mContext.getContentResolver(), Settings.System.HALO_HIDE, 0, UserHandle.USER_CURRENT) == 1;
             if (!selfChange) {
-		if (!mHide){
-		    mEffect.setVisibility(View.VISIBLE);
-		}
                 mEffect.wake();
                 mEffect.ping(mPaintHoloBlue, HaloEffect.WAKE_TIME);
                 mEffect.nap(HaloEffect.SNAP_TIME + 1000);
-                if (mHideTicker) {
-		    mEffect.sleep(HaloEffect.SNAP_TIME + HaloEffect.NAP_TIME + 2500, HaloEffect.SLEEP_TIME, false, mHide);
-		}
+                if (mHideTicker) mEffect.sleep(HaloEffect.SNAP_TIME + HaloEffect.NAP_TIME + 2500, HaloEffect.SLEEP_TIME, false);
             }
         }
     }
@@ -298,9 +289,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
         mInteractionReversed =
                 Settings.System.getIntForUser(mContext.getContentResolver(), Settings.System.HALO_REVERSED, 1, UserHandle.USER_CURRENT) == 1;
         mHideTicker =
-                Settings.System.getIntForUser(mContext.getContentResolver(), Settings.System.HALO_HIDDEN, 0, UserHandle.USER_CURRENT) != 0;
-        mHide = Settings.System.getIntForUser(mContext.getContentResolver(),
-                        Settings.System.HALO_HIDDEN, 0, UserHandle.USER_CURRENT) == 2;
+                Settings.System.getIntForUser(mContext.getContentResolver(), Settings.System.HALO_HIDE, 0, UserHandle.USER_CURRENT) == 1;
         mHaloSize = Settings.System.getFloatForUser(mContext.getContentResolver(),
                 Settings.System.HALO_SIZE, 1.0f, UserHandle.USER_CURRENT);
         mHapticFeedback = Settings.System.getIntForUser(mContext.getContentResolver(),
@@ -358,7 +347,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
             mState = State.FIRST_RUN;
             preferences.edit().putBoolean(KEY_HALO_FIRST_RUN, false).apply();
         }
-
+        
         if (!mFirstStart) {
             if (msavePositionY < 0) mEffect.setHaloY(0);
             float mTmpHaloY = (float) msavePositionY / mScreenWidth * (mScreenHeight);
@@ -372,13 +361,9 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                 mEffect.setHaloX((int)(mTickerLeft ? -mIconSize*0.8f : mScreenWidth - mIconSize*0.2f));
                 final int triggerWidth = (int)(mTickerLeft ? -mIconSize*0.7f : mScreenWidth - mIconSize*0.3f);
                 updateTriggerPosition(triggerWidth, mEffect.mHaloY);
-		if(mHide) {
-		    final boolean iSsilent = (mState == State.SILENT);
-	    	    mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, iSsilent, mHide);
-		}
             } else {
                 mEffect.nap(500);
-                if (mHideTicker) mEffect.sleep(HaloEffect.SNAP_TIME + HaloEffect.NAP_TIME + 2500, HaloEffect.SLEEP_TIME, false, mHide);
+                if (mHideTicker) mEffect.sleep(HaloEffect.SNAP_TIME + HaloEffect.NAP_TIME + 2500, HaloEffect.SLEEP_TIME, false);
             }
         } else {
             // Do the startup animations only once
@@ -408,7 +393,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                                                 mEffect.nap(0);
                                                 mEffect.setHaloOverlay(HaloProperties.Overlay.NONE, 0f);
                                                 if (mHideTicker) mEffect.sleep(HaloEffect.SNAP_TIME + HaloEffect.NAP_TIME
-                                                        + 2500, HaloEffect.SLEEP_TIME, false, mHide);                                        
+                                                        + 2500, HaloEffect.SLEEP_TIME, false);                                        
                                             }}, 6000);
                                     }}, 6000);
                             }}, 6000);
@@ -416,7 +401,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
             } else {
                 mEffect.setHaloX(msavePositionX);
                 mEffect.nap(500);
-                if (mHideTicker) mEffect.sleep(HaloEffect.SNAP_TIME + HaloEffect.NAP_TIME + 2500, HaloEffect.SLEEP_TIME, false, mHide);
+                if (mHideTicker) mEffect.sleep(HaloEffect.SNAP_TIME + HaloEffect.NAP_TIME + 2500, HaloEffect.SLEEP_TIME, false);
             }
         }
     }
@@ -470,10 +455,6 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
         } else {
             clearTicker();
         }
-	if(mHide) {
-	    final boolean iSsilent = (mState == State.SILENT);
-	    mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, iSsilent, mHide);
-	}
     }
 
     public void setStatusBar(BaseStatusBar bar) {
@@ -597,7 +578,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                 if (hiddenState) {
                     mEffect.wake();
                     if (mHideTicker) {
-                        mEffect.sleep(2500, HaloEffect.SLEEP_TIME, false, mHide);
+                        mEffect.sleep(2500, HaloEffect.SLEEP_TIME, false);
                     } else {
                         mEffect.nap(2500);
                     }
@@ -646,24 +627,24 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                         launchTask(mTaskIntent);
                     }
                     mEffect.nap(100);
-                    if (mHideTicker) mEffect.sleep(HaloEffect.NAP_TIME + 1500, HaloEffect.SLEEP_TIME, false, mHide);
+                    if (mHideTicker) mEffect.sleep(HaloEffect.NAP_TIME + 1500, HaloEffect.SLEEP_TIME, false);
 
                 } else if (mGesture == Gesture.DOWN2) {
                     // Hide & silence
                     playSoundEffect(SoundEffectConstants.CLICK);
-                    mEffect.sleep(0, HaloEffect.NAP_TIME / 2, true, mHide);
+                    mEffect.sleep(0, HaloEffect.NAP_TIME / 2, true);
 
                 } else if (mGesture == Gesture.DOWN1) {
                     // Hide from sight
                     playSoundEffect(SoundEffectConstants.CLICK);
-                    mEffect.sleep(0, HaloEffect.NAP_TIME / 2, false, mHide);
+                    mEffect.sleep(0, HaloEffect.NAP_TIME / 2, false);
 
                 } else if (mGesture == Gesture.UP2) {
                     // Clear all notifications
                     playSoundEffect(SoundEffectConstants.CLICK);
                     if (getHaloMsgCount()-getHidden() < 1) {
                         mEffect.nap(1500);
-                        if (mHideTicker) mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, false, mHide);
+                        if (mHideTicker) mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, false);
                     }
                     try {
                         mDismissDelay = 0;
@@ -677,7 +658,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                     playSoundEffect(SoundEffectConstants.CLICK);
                     if (getHaloMsgCount()-getHidden() < 1) {
                         mEffect.nap(1500);
-                        if (mHideTicker) mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, false, mHide);
+                        if (mHideTicker) mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, false);
                     }
                     if (mContentIntent != null) {
                         try {
@@ -691,7 +672,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                     // No gesture, just snap HALO
                     mEffect.snap(0);
                     mEffect.nap(HaloEffect.SNAP_TIME + 1000);
-                    if (mHideTicker) mEffect.sleep(HaloEffect.SNAP_TIME + HaloEffect.NAP_TIME + 2500, HaloEffect.SLEEP_TIME, false, mHide);
+                    if (mHideTicker) mEffect.sleep(HaloEffect.SNAP_TIME + HaloEffect.NAP_TIME + 2500, HaloEffect.SLEEP_TIME, false);
                 }
 
                 mState = State.IDLE;
@@ -1189,26 +1170,15 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
             }, 2000);
         }
 
-        public void sleep(long delay, int speed, final boolean silent, final boolean remove) {
-	    
+        public void sleep(long delay, int speed, final boolean silent) {
             final int newPos = (int)(mTickerLeft ? -mIconSize*0.8f : mScreenWidth - mIconSize*0.2f);
-    	    mNewState = silent ? State.SILENT : State.HIDDEN;
-	    if (mNewState != mState) {
             snapAnimator.animate(ObjectAnimator.ofInt(this, "haloX", newPos).setDuration(speed),
                     new DecelerateInterpolator(), null, delay, new Runnable() {
                         public void run() {
-                            mState = mNewState;
+                            mState = silent ? State.SILENT : State.HIDDEN;
                             final int triggerWidth = (int)(mTickerLeft ? -mIconSize*0.7f : mScreenWidth - mIconSize*0.3f);
                             updateTriggerPosition(triggerWidth, mHaloY);
                         }});
-	    }
-	    if(remove) {
-            	postDelayed(new Runnable() {
-            	    public void run() {
-                    	mEffect.setVisibility(mNotificationData.size() > 0 ? View.VISIBLE : View.GONE);
-            	    }
-            	}, mNotificationData.size() > 0 ? 0 : delay);
-	    }
         }
 
         public void unscheduleSleep() {
@@ -1432,9 +1402,6 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
 
     // This is the android ticker callback
     public void updateTicker(StatusBarNotification notification, String text) {
-        if (mHide) {
-            mEffect.sleep(HaloEffect.SLEEP_DELAY + HaloEffect.WAKE_TIME * 2, HaloEffect.SLEEP_TIME, false, mHide);
-        }
         boolean allowed = false; // default off
         try {
             allowed = mNotificationManager.isPackageAllowedForHalo(notification.getPackageName());
@@ -1466,7 +1433,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                                 if (mState == State.HIDDEN) clearTicker();
                                 mEffect.wake();
                                 mEffect.nap(HaloEffect.NAP_DELAY + HaloEffect.WAKE_TIME * 2);
-                                if (mHideTicker) mEffect.sleep(HaloEffect.SLEEP_DELAY + HaloEffect.WAKE_TIME * 2, HaloEffect.SLEEP_TIME, false, mHide);
+                                if (mHideTicker) mEffect.sleep(HaloEffect.SLEEP_DELAY + HaloEffect.WAKE_TIME * 2, HaloEffect.SLEEP_TIME, false);
                             }
 
                             tick(entry, HaloEffect.WAKE_TIME * 2, 1000, true, true, false);
@@ -1592,12 +1559,8 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                     mEffect.setHaloMessageNumber(c);
                     if (mState == State.IDLE) {
                         mEffect.nap(1500);
-                        if (mHideTicker) mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, false, mHide);
+                        if (mHideTicker) mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, false);
                     }
-	    	    if(mHide && c == 0) {
-			final boolean iSsilent = (mState == State.SILENT);
-	    		mEffect.sleep(HaloEffect.NAP_TIME + 3000, HaloEffect.SLEEP_TIME, iSsilent, mHide);
-	    	    }
                 }
             }, mDismissDelay);
 
@@ -1622,13 +1585,10 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                         public void run() {
                             int lastMsg = getHaloMsgCount() - getHidden();
                             if (lastMsg > 0) {
-                                NotificationData.Entry entry = mNotificationData.get(getHaloMsgIndex(lastMsg - 1, true));
-        			if (!mHide) {
-            			mEffect.setVisibility(View.VISIBLE);
-        			}     
+                                NotificationData.Entry entry = mNotificationData.get(getHaloMsgIndex(lastMsg - 1, true));                                
                                 mEffect.wake();
                                 mEffect.nap(HaloEffect.NAP_DELAY + HaloEffect.WAKE_TIME * 2);
-                                if (mHideTicker) mEffect.sleep(HaloEffect.SLEEP_DELAY + HaloEffect.WAKE_TIME * 2, HaloEffect.SLEEP_TIME, false, mHide);
+                                if (mHideTicker) mEffect.sleep(HaloEffect.SLEEP_DELAY + HaloEffect.WAKE_TIME * 2, HaloEffect.SLEEP_TIME, false);
                                 tick(entry, HaloEffect.WAKE_TIME * 2, 1000, false, true, false);
                                 mEffect.ping(mPaintHoloBlue, HaloEffect.WAKE_TIME * 2);
                                 mPingNewcomer = false;

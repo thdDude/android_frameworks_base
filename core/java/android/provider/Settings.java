@@ -3796,7 +3796,7 @@ public final class Settings {
          * HALO hide?, should default to 0 (no, do not hide)
          * @hide
          */
-        public static final String HALO_HIDDEN = "halo_hidden";
+        public static final String HALO_HIDE = "halo_hide";
 
         /**
          * HALO pause activities?, defaults to 0 (no, do not pause) on devices which isLargeRAM() == true

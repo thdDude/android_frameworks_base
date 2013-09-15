@@ -342,6 +342,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     boolean mHasAssistKey;
     boolean mHasAppSwitchKey;
     boolean mHasMenuKeyEnabled;
+    int shortSizeDp;
 
     // The last window we were told about in focusChanged.
     WindowState mFocusedWindow;
@@ -1355,7 +1356,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                                         com.android.internal.R.dimen.navigation_bar_width));
 
         // SystemUI (status bar) layout policy
-        int shortSizeDp = shortSize * DisplayMetrics.DENSITY_DEFAULT / density;
+        shortSizeDp = shortSize * DisplayMetrics.DENSITY_DEFAULT / density;
 
         ContentResolver resolver = mContext.getContentResolver();
         boolean tabletModeOverride = Settings.System.getInt(resolver,
@@ -1590,7 +1591,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             boolean tabletModeOverride = Settings.System.getInt(resolver,
                         Settings.System.TABLET_MODE, 0) == 1;
 
-	    if (mShortSizeDp < 600 && !tabletModeOverride) {
+	    mNavigationBarCanMove= false;
+	    if (shortSizeDp < 600 && !tabletModeOverride) {
                 mNavigationBarCanMove = (Settings.System.getInt(resolver,
                         Settings.System.NAVIGATION_BAR_CAN_MOVE, 1) == 1);
             } 

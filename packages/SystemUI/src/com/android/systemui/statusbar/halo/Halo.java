@@ -908,7 +908,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
         // Kill the effect layer
         if (mEffect != null) mWindowManager.removeView(mEffect);
         // Remove resolver
-        mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
+        if (mSettingsObserver != null) mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
         mContext.unregisterReceiver(mReceiver);
     }
 

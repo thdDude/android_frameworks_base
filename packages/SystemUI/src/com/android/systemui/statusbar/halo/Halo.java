@@ -678,7 +678,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
                     playSoundEffect(SoundEffectConstants.CLICK);
                     try {
                         mDismissDelay = 0;
-                        mBar.getService().onClearAllNotifications();
+                        mBar.getStatusBarService().onClearAllNotifications();
                     } catch (RemoteException ex) {
                         // system process is dead if we're here.
                     }
@@ -690,7 +690,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback {
                     if (mContentIntent != null) {
                         try {
                             mDismissDelay = 0;
-                            mBar.getService().onNotificationClear(mContentIntent.mPkg, mContentIntent.mTag, mContentIntent.mId);
+                            mBar.getStatusBarService().onNotificationClear(mContentIntent.mPkg, mContentIntent.mTag, mContentIntent.mId);
                         } catch (RemoteException ex) {
                             // system process is dead if we're here.
                         }

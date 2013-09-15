@@ -486,8 +486,10 @@ public class KeyguardHostView extends KeyguardViewBase {
             }
         }
         if (back != null) {
+	    if(!mUseOp4Lockscreen || !mUseOp4Color) {
             back.setColorFilter(BACKGROUND_COLOR, PorterDuff.Mode.SRC_ATOP);
             setBackground(back);
+	    }
         }
     }
 

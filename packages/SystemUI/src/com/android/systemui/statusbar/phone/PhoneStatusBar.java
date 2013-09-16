@@ -587,13 +587,20 @@ public class PhoneStatusBar extends BaseStatusBar {
             mNotificationPanelDebugText.setVisibility(View.VISIBLE);
         }
 
-        if (mNavigationBarView == null && !mRecreating) {
-            mNavigationBarView =
-                (NavigationBarView) View.inflate(context, R.layout.navigation_bar, null);
+
+        try {
+            boolean showNav = mWindowManagerService.hasNavigationBar();
+            if (DEBUG) Slog.v(TAG, "hasNavigationBar=" + showNav);
+            if (showNav && !mRecreating) {
+                mNavigationBarView =
+                    (NavigationBarView) View.inflate(context, R.layout.navigation_bar, null);
 
                 mNavigationBarView.setDisabledFlags(mDisabled);
-                mNavigationBarView.setBar(this); 
-                //addNavigationBarCallback(mNavigationBarView);
+                mNavigationBarView.setBar(this);
+                addNavigationBarCallback(mNavigationBarView);
+            }
+        } catch (RemoteException ex) {
+            // no window manager? good luck with that
         }
 
 	//re-create sidebar

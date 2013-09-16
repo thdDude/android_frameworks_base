@@ -59,7 +59,6 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
 import android.os.ServiceManager;
-import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.text.TextUtils;
@@ -319,8 +318,6 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     protected Display mDisplay;
 
-    private static boolean mNavBarFirstBootFlag = true;
-
     private boolean mDeviceProvisioned = false;
     private int mAutoCollapseBehaviour;
 
@@ -415,23 +412,6 @@ public abstract class BaseStatusBar extends SystemUI implements
 
         mLocale = mContext.getResources().getConfiguration().locale;
         mLayoutDirection = TextUtils.getLayoutDirectionFromLocale(mLocale);
-
-	try {
-        mNavBarFirstBootFlag = !mWindowManagerService.hasNavigationBar();
-        } catch (RemoteException e) {
-	// do nothing
-        }
-
-        boolean showNavBar = mContext.getResources().getBoolean(
-                    com.android.internal.R.bool.config_showNavigationBar);
-            // Allow a system property to override this. Used by the emulator.
-            // See also hasNavigationBar().
-            String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
-            if (! "".equals(navBarOverride)) {
-                if      (navBarOverride.equals("1")) showNavBar = false;
-
-                else if (navBarOverride.equals("0")) showNavBar = true;
-            }
 
         // Connect in to the status bar manager service
         StatusBarIconList iconList = new StatusBarIconList();
@@ -1800,8 +1780,6 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.QUICK_SETTINGS_COLUMNS), false, this,
                     UserHandle.USER_ALL);
         resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.NAVIGATION_BAR_SHOW), false, this);
-        resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.TABLET_MODE), false, this);
         resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.SETTINGS_TILE_COLOR), false, this);
@@ -1823,10 +1801,6 @@ public abstract class BaseStatusBar extends SystemUI implements
 	            updateHalo();
             } else if (uri.equals(Settings.System.getUriFor(Settings.System.HALO_SIZE))) {
 	            restartHalo();
-            } else if (uri.equals(Settings.System.getUriFor(Settings.System.NAVIGATION_BAR_SHOW))) {
-		if (mNavBarFirstBootFlag) {
-            		android.os.Process.killProcess(android.os.Process.myPid());
-		}
 	    } else {
             	android.os.Process.killProcess(android.os.Process.myPid());
 	    }

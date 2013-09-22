@@ -389,8 +389,6 @@ public class PhoneStatusBar extends BaseStatusBar {
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.SCREEN_BRIGHTNESS_MODE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_TRANSPARENCY), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NOTIFICATION_PANEL_TRANSPARENCY), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.PIE_DISABLE_STATUSBAR_INFO), false, this);
@@ -421,9 +419,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                 mWindowManager.updateViewLayout(mAppSidebar, getAppSidebarLayoutParams(sidebarPosition));
             }
 
-            setStatusBarParams(mStatusBarView);
             setNotificationPanelParams(mNotificationPanel);
-//	    setNotificationPanelParams(mNavigationBarView);
             showClock(true);
         }
     }

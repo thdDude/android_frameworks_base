@@ -437,6 +437,10 @@ public abstract class BaseStatusBar extends SystemUI implements
         mHaloEnabled = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.HALO_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
 
+            mAutoCollapseBehaviour = Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.STATUS_BAR_COLLAPSE_ON_DISMISS,
+                    Settings.System.STATUS_BAR_COLLAPSE_IF_NO_CLEARABLE, UserHandle.USER_CURRENT);
+
 
         createAndAddWindows();
         mWidgetView = new WidgetView(mContext,null);

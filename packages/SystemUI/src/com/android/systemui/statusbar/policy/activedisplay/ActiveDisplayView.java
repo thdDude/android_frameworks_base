@@ -313,6 +313,12 @@ public class ActiveDisplayView extends FrameLayout {
             if (!mDisplayNotifications || mRedisplayTimeout <= 0) {
                 cancelRedisplayTimer();
             }
+
+            if (mDisplayNotifications && mPocketModeEnabled) {
+                registerSensorListener();
+            } else {
+                unregisterSensorListener();
+            }
         }
     }
 
@@ -712,8 +718,14 @@ public class ActiveDisplayView extends FrameLayout {
     }
 
     private void registerSensorListener() {
-        if (mProximitySensor != null)
-            mSensorManager.registerListener(mSensorListener, mProximitySensor, SensorManager.SENSOR_DELAY_UI);
+        if (mProximitySensor != null) {
+            if (mDisplayNotifications && mPocketModeEnabled) {
+                mSensorManager.registerListener(mSensorListener, mProximitySensor,
+                        SensorManager.SENSOR_DELAY_UI);
+            } else {
+                mSensorManager.unregisterListener(mSensorListener, mProximitySensor);
+            }
+        }
         if (mLightSensor != null)
             mSensorManager.registerListener(mSensorListener, mLightSensor, SensorManager.SENSOR_DELAY_UI);
     }

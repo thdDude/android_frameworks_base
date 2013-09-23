@@ -380,7 +380,11 @@ public class ActiveDisplayView extends FrameLayout {
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         registerNotificationListener();
+	if (mDisplayNotifications) {
         registerSensorListener();
+	} else {
+        unregisterSensorListener();
+	}
         registerBroadcastReceiver();
         mSettingsObserver.observe();
         if (mRedisplayTimeout > 0 && !isScreenOn()) updateRedisplayTimer();
@@ -712,8 +716,14 @@ public class ActiveDisplayView extends FrameLayout {
     }
 
     private void registerSensorListener() {
-        if (mProximitySensor != null)
-            mSensorManager.registerListener(mSensorListener, mProximitySensor, SensorManager.SENSOR_DELAY_UI);
+        if (mProximitySensor != null) {
+	    if (mPocketModeEnabled) {
+            	mSensorManager.registerListener(mSensorListener, mProximitySensor,
+ 			SensorManager.SENSOR_DELAY_UI);
+	    } else {
+           	mSensorManager.unregisterListener(mSensorListener, mProximitySensor);
+	    }
+	}
         if (mLightSensor != null)
             mSensorManager.registerListener(mSensorListener, mLightSensor, SensorManager.SENSOR_DELAY_UI);
     }

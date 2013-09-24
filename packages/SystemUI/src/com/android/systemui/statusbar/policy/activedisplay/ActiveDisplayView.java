@@ -536,7 +536,7 @@ public class ActiveDisplayView extends FrameLayout {
             if (mNotification != null && mNotification.isClearable()) {
                 storedDraw.add(new TargetDrawable(res, res.getDrawable(R.drawable.ic_ad_dismiss_notification)));
             } else {
-                storedDraw.add(new TargetDrawable(res, res.getDrawable(R.drawable.ic_qs_power)));
+                storedDraw.add(new TargetDrawable(res, res.getDrawable(R.drawable.ic_sysbar_power)));
             }
         }
         storedDraw.add(new TargetDrawable(res, null));

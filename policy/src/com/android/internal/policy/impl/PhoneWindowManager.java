@@ -185,6 +185,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final int KEY_ACTION_POWER = 7;
     private static final int KEY_ACTION_CUSTOM_APP = 8;
     private static final int KEY_ACTION_WIDGETS = 9;
+    private static final int KEY_ACTION_LAUNCH_CAMERA = 10;
 
     // Masks for checking presence of hardware keys.
     // Must match values in core/res/res/values/config.xml
@@ -193,6 +194,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final int KEY_MASK_MENU = 0x04;
     private static final int KEY_MASK_ASSIST = 0x08;
     private static final int KEY_MASK_APP_SWITCH = 0x10;
+    private static final int KEY_MASK_CAMERA = 0x20;
 
     /**
      * These are the system UI flags that, when changing, can cause the layout
@@ -1079,6 +1081,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 case KEY_ACTION_POWER:
                     PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
                     pm.goToSleep(SystemClock.uptimeMillis());
+                    break;
+            	case KEY_ACTION_LAUNCH_CAMERA:
+                    triggerVirtualKeypress(KeyEvent.KEYCODE_CAMERA);
                     break;
                 default:
                     break;

@@ -2757,6 +2757,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     }
                 }
             } else {
+                if (mRecentAppsPreloaded && !mPressOnMenuBehavior.equals(KEY_ACTION_APP_SWITCH) &&
+                        !mLongPressOnMenuBehavior.equals(KEY_ACTION_APP_SWITCH)) {
+                    cancelPreloadRecentApps();
+                }
                 if (mMenuDoCustomAction) {
                     mMenuDoCustomAction = false;
                     if (!canceled && !keyguardOn) {

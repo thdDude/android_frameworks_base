@@ -2876,10 +2876,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     return -1;
                 }
             } else {
-                if (mRecentAppsPreloaded && !mPressOnCameraBehavior.equals(KEY_ACTION_APP_SWITCH) &&
-                        !mLongPressOnBackBehavior.equals(KEY_ACTION_APP_SWITCH)) {
-                    cancelPreloadRecentApps();
-                }
                 if (mCameraLongPressed) {
                     mCameraLongPressed = false;
                     return -1;

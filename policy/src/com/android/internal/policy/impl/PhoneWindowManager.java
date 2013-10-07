@@ -1042,13 +1042,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         final KeyEvent upEvent = KeyEvent.changeAction(downEvent, KeyEvent.ACTION_UP);
 
 	mIsVirtualKeypress = true;
-        im.injectInputEvent(downEvent, InputManager.INJECT_INPUT_EVENT_MODE_WAIT_FOR_RESULT);
+        im.injectInputEvent(downEvent, InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
                 if (keyCode == KeyEvent.KEYCODE_CAMERA) {
                     KeyEvent repeatEvent = KeyEvent.changeTimeRepeat(downEvent,
                             SystemClock.uptimeMillis(), 1, downEvent.getFlags() | KeyEvent.FLAG_LONG_PRESS);
-                    im.injectInputEvent(repeatEvent, InputManager.INJECT_INPUT_EVENT_MODE_WAIT_FOR_RESULT);
+                    im.injectInputEvent(repeatEvent, InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
                 }
-        im.injectInputEvent(upEvent, InputManager.INJECT_INPUT_EVENT_MODE_WAIT_FOR_RESULT);
+        im.injectInputEvent(upEvent, InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
 	mIsVirtualKeypress = false;
     }
 

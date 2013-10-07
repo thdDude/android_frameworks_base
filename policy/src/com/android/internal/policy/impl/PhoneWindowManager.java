@@ -2757,10 +2757,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     }
                 }
             } else {
-                if (mRecentAppsPreloaded && !mPressOnMenuBehavior.equals(KEY_ACTION_APP_SWITCH) &&
-                        !mLongPressOnMenuBehavior.equals(KEY_ACTION_APP_SWITCH)) {
-                    cancelPreloadRecentApps();
-                }
                 if (mMenuDoCustomAction) {
                     mMenuDoCustomAction = false;
                     if (!canceled && !keyguardOn) {
@@ -2880,8 +2876,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     return -1;
                 }
             } else {
-                if (mRecentAppsPreloaded && !mPressOnCameraBehavior.equals(getStr(KEY_ACTION_APP_SWITCH)) &&
-                        !mLongPressOnBackBehavior.equals(getStr(KEY_ACTION_APP_SWITCH))) {
+                if (mRecentAppsPreloaded && !mPressOnCameraBehavior.equals(KEY_ACTION_APP_SWITCH) &&
+                        !mLongPressOnBackBehavior.equals(KEY_ACTION_APP_SWITCH)) {
                     cancelPreloadRecentApps();
                 }
                 if (mCameraLongPressed) {

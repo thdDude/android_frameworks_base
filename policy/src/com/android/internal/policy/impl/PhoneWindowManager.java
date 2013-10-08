@@ -276,7 +276,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     int mStatusBarHeight;
     WindowState mNavigationBar = null;
     boolean mHasNavigationBar = false;
-    private boolean mNavBarFirstBootFlag = true;
     boolean mCanHideNavigationBar = false;
     boolean mNavigationBarCanMove = false; // can the navigation bar ever move to the side?
     boolean mNavigationBarOnBottom = true; // is the navigation bar on the bottom *right now*?
@@ -490,7 +489,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     boolean mMenuLongPressed;
     boolean mBackLongPressed;
     boolean mAppSwitchLongPressed;
-    boolean mHomeConsumed;
     Intent mHomeIntent;
     Intent mCarDockIntent;
     Intent mDeskDockIntent;
